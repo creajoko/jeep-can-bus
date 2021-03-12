@@ -45,6 +45,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\project\arduino\jeep-can-bus\jeep-can-bus.ino">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

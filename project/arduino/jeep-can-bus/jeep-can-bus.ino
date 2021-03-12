@@ -4,6 +4,16 @@
 #include "mcp_can.h"
 #include "jeep-can-bus-messages.h"
 
+// Operational control of the scetch
+#define RADIOMODE_OTHER 0
+#define RADIOMODE_AUX 1
+//#define SCANNER
+#define FILTERED_SCANNER
+
+// Filtersetting max 20
+//int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
+//unsigned int can_id_filter[] = {0x015};
+int can_id_filter[] = {0x3F1, CAN_RADIO_MODE, CAN_RADIO_SOUND_PROFILE};
 
 #define CAN_MODULE_CS_PIN 9
 #define CHECK_PERIOD_MS 200
@@ -19,18 +29,7 @@ unsigned long lastAnnounce = 0;
 unsigned long lastButtonPress = 0;
 unsigned long lastDisplayRefresh = 0;
 
-// Operational control
-#define RADIOMODE_OTHER 0
-#define RADIOMODE_AUX 1
-//#define SCANNER
-#define FILTERED_SCANNER
-
-// Filtersetting max 20
-//int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
-//unsigned int can_id_filter[] = {0x015};
-int can_id_filter[] = { 0x3F1, CAN_RADIO_MODE, CAN_RADIO_SOUND_PROFILE};
-
-// Messages
+// Outgoing Messages
 #define msgVesAuxModeLen 8
 unsigned char msgVesAuxMode[8] = {3, 0, 0, 0, 0, 0, 0, 0};
 #define msgPowerOnLen 6 // Emmited by car when power is on
@@ -53,6 +52,7 @@ void setup() {
 }
 
 int display[20][20];
+
 void clearScr() { // Works w putty terminal
   Serial.write(27);
   Serial.print("[2J");
@@ -62,17 +62,26 @@ void clearScr() { // Works w putty terminal
   
 void displayScr() {
   clearScr();
-  for(int i=0;i<20;i++) {
+  for(int i=0;i<10;i++) {
     for(int j=0;j<20;j++) {
       char cell[4];
       sprintf(cell, " %03X",display[i][j]);
       Serial.print(cell);
-      }
-      Serial.println();
     }
-    lastDisplayRefresh = millis();
+    Serial.println();
   }
- 
+  lastDisplayRefresh = millis();
+}
+
+bool inArray(int val, int arr[]) {
+  for (int i = 0; i < sizeof(arr); i++) {
+    if (val == arr[i]) {
+      return i;
+    }
+  }
+  return 99;
+}
+
 void sendAnnouncements() {
 #ifdef BENCH_MODE_ON
   // when on bench - send power on command to radio to enable it
@@ -86,24 +95,14 @@ unsigned char len = 0;
 unsigned char buf[8];
 unsigned char newMode = 0;
 
-bool inArray(int val, int arr[]) {
-  for (int i = 0; i < sizeof(arr); i++) {
-    if (val == arr[i]) {
-      return i;
-    }
-  }
-  return 99;
-}
-
-
-
 void checkIncomingMessages() {
   if (CAN_MSGAVAIL != CAN.checkReceive())
     return;
   CAN.readMsgBuf(&len, buf);
   canId = CAN.getCanId();
+
 #ifdef SCANNER
-  // All messages on the c-bus
+  // All messages on the c-bus as csv
   Serial.print(canId, HEX);
   for (int i = 0; i < len; i++) {
     Serial.print(",");
@@ -113,9 +112,9 @@ void checkIncomingMessages() {
   return;
 #endif
 
-
 #ifdef FILTERED_SCANNER
-  // Targeted (can_id_filter) messages on the c-bus, csv
+  // Targeted (can_id_filter) messages on the c-bus present as matrix on terminal
+  // refressed everey 500ms
   int index = inArray(canId, can_id_filter);
   if(index<99) {
     display[index][0] = canId;
