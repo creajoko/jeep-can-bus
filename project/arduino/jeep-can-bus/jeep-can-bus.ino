@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <stdio.h>
 #include "mcp_can.h"
+#include "jeep-can-bus-messages.h"
 
 
 #define CAN_MODULE_CS_PIN 9
@@ -24,39 +25,10 @@ unsigned long lastDisplayRefresh = 0;
 //#define SCANNER
 #define FILTERED_SCANNER
 
-// Can Id messages Jeep
-#define CAN_POWER 0x000
-#define CAN_BLINKERS 0x006
-#define CAN_RADIO_MODE 0x09f
-#define CAN_RADIO_CONTROLS 0x394 // Emitted by the radio 
-#define CAN_VES_UNIT 0x3dd
-#define CAN_MULTI_SWITCH   0x11d
-#define CAN_HEADLIGHTS
-
-// Pressing steeringwheel radio ctrls
-// 0x15
-// 0x1B6
-// 0x3A0
-// 0x3D0 - from radio?
-// 0x3F8
-// 0x9F - from radio!
-
-// Ids added when Jeep stereo is connected (off)
-// 0x1AB
-// 0x416
-// 0x394
-// ox3D0
-// 0x1BB
-// 0x9F - from radio
-
-// TBD
-// 0x2C0
-// 0x3F1
-// 0x159
-
 // Filtersetting max 20
-int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
+//int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
 //unsigned int can_id_filter[] = {0x015};
+int can_id_filter[] = { 0x3F1, CAN_RADIO_MODE, CAN_RADIO_SOUND_PROFILE};
 
 // Messages
 #define msgVesAuxModeLen 8
