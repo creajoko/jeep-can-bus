@@ -1,0 +1,3 @@
+on/off 5ggr
+höger knapp cycle through bass, mid, treble, balance,fade 5?times
+cycle through respective above back/forts 5 times
