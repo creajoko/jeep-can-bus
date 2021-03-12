@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include "mcp_can.h"
 
-// TEST
 
 #define CAN_MODULE_CS_PIN 9
 #define CHECK_PERIOD_MS 200
