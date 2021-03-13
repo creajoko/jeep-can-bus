@@ -14,8 +14,8 @@ unsigned long lastCheck = 0;
 unsigned long lastAnnounce = millis();
 
 // Messages needed to control Boston amp
-#define msgProfile1Len 7 // Emmited by car when power is on
-unsigned char msgProfile1[7] = {CAN_RADIO_SOUND_PROFILE, 0x0A, 0x0A, 0x0A, 00x0A, 00x0A, 0xFF};
+#define msgProfile1Len 8 // Emmited by car when power is on
+unsigned char msgProfile1[8] = {CAN_RADIO_SOUND_PROFILE, 0x12, 0x12, 0x12, 0x12, 0x12, 0xFF, 0x1F};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
@@ -56,6 +56,5 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-  }
   handleIncomingMessages();
 }
