@@ -10,12 +10,11 @@
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
-unsigned long lastCheck = 0;
 unsigned long lastAnnounce = millis();
 
 // Messages needed to control Boston amp
-#define msgProfile1Len 8 // Emmited by car when power is on
-unsigned char msgProfile1[8] = {CAN_RADIO_SOUND_PROFILE, 0x12, 0x12, 0x12, 0x12, 0x12, 0xFF, 0x1F};
+#define msgProfile1Len 7
+unsigned char msgProfile1[7] = {0x12, 0x05, 0x05, 0x05, 0x05, 0x05, 0xFF};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 

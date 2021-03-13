@@ -6,13 +6,8 @@
 
 
 #define CAN_MODULE_CS_PIN 9
-#define CHECK_PERIOD_MS 200
-#define ANNOUNCE_PERIOD_MS 500
-#define BUTTON_PRESS_DEBOUNCE_MS 350
-#define CAN_DELAY_AFTER_SEND 20
 #define DISPLAY_REFRESH_PERIOD 500
 #define MESSAGE_LEN 8
-#define FIRST_ANNOUNCE_AFTER 10000
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
@@ -22,12 +17,13 @@ unsigned long lastDisplayRefresh = 0;
 // Operational control
 //#define SCANNER
 #define FILTERED_SCANNER
-#define FILTER_PERIOD 10000
+//#define FILTER_PERIOD 10000 // Stop after ms
 
 // Filtersetting max 20
 //int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
 //unsigned int can_id_filter[] = {0x015};
-int can_id_filter[] = { 0x015, 0x1B6, 0x3A0, 0x3D0, CAN_RADIO_MODE, CAN_RADIO_SOUND_PROFILE, 0x3F8, 0x1B6};
+int can_id_filter[] = {CAN_RADIO_MODE,CAN_RADIO_CONTROLS,CAN_RADIO_SOUND_PROFILE};
+
 int filter_len = sizeof(can_id_filter);
 
 const char compileDate[] = __DATE__ " " __TIME__;
@@ -105,12 +101,13 @@ void checkIncomingMessages() {
   // Targeted (can_id_filter) messages on the c-bus, as csv
   int index = inArray(canId, can_id_filter);
   if(index<99) {
-    display[index][0] = canId;
+    display[index][0] = canId
     for (int i = 0; i < MESSAGE_LEN; i++) {
       display[index][i+1] = buf[i];
     }
     // Add time since last message ms
     display[index][MESSAGE_LEN+2] = millis() - display[index][MESSAGE_LEN+2]
+
     if (millis() > lastDisplayRefresh + DISPLAY_REFRESH_PERIOD) {
       displayScr();
     }
