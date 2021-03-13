@@ -21,8 +21,8 @@
 // Ids added when Jeep stereo is connected (off)
 // 0x1AB
 // 0x416
-// 0x394
-// ox3D0
+// 0x394 - skum!
+// ox3D0 - sound profile source?
 // 0x1BB
 // 0x9F - from radio
 

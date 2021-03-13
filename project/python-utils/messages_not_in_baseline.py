@@ -119,6 +119,6 @@ def number_of_message_types_baseline_vs_cruisctrl_pressing(n):
         i += 1
 
 
-# added_by_radio(100)
+added_by_radio(100)
 # added_by_cruisctrl(100)
-number_of_message_types_baseline_vs_cruisctrl_pressing(100)
+# number_of_message_types_baseline_vs_cruisctrl_pressing(100)

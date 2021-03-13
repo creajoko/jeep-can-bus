@@ -16,16 +16,13 @@
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
-unsigned long lastCheck = 0;
-unsigned long lastAnnounce = millis();
-unsigned long lastButtonPress = 0;
+unsigned long filterStarted = millis();
 unsigned long lastDisplayRefresh = 0;
 
 // Operational control
-#define RADIOMODE_OTHER 0
-#define RADIOMODE_AUX 1
 //#define SCANNER
 #define FILTERED_SCANNER
+#define FILTER_PERIOD 10000
 
 // Filtersetting max 20
 //int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
@@ -33,16 +30,6 @@ unsigned long lastDisplayRefresh = 0;
 int can_id_filter[] = { 0x015, 0x1B6, 0x3A0, 0x3D0, CAN_RADIO_MODE, CAN_RADIO_SOUND_PROFILE, 0x3F8, 0x1B6};
 int filter_len = sizeof(can_id_filter);
 
-// Messages
-#define msgVesAuxModeLen 8
-unsigned char msgVesAuxMode[8] = {3, 0, 0, 0, 0, 0, 0, 0};
-#define msgPowerOnLen 6 // Emmited by car when power is on
-unsigned char msgPowerOn[6] = {0x63, 0, 0, 0, 0, 0};
-
-#define msgProfile1Len 7 // Emmited by car when power is on
-unsigned char msgProfile1[7] = {CAN_RADIO_SOUND_PROFILE, 1, 1, 1, 1, 1, 0xFF};
-
-unsigned char radioMode = RADIOMODE_OTHER;
 const char compileDate[] = __DATE__ " " __TIME__;
 
 void setup() {
@@ -59,7 +46,7 @@ void setup() {
 }
 
 int display[20][20];
-void clearScr() { // Works w putty terminal
+void clearScr() {
   Serial.write(27);
   Serial.print("[2J");
   Serial.write(27);
@@ -68,26 +55,24 @@ void clearScr() { // Works w putty terminal
   
 void displayScr() {
   clearScr();
-  for(int i=0;i<10;i++) {
-    for(int j=0;j<10;j++) {
+  for(int i=0;i<15;i++) {
+    for(int j=0;j<15;j++) {
       char cell[4];
-      sprintf(cell, " %03X",display[i][j]);
+      if(j == MESSAGE_LEN+2) {
+        sprintf(cell, " %03d",display[i][j]);
+      } else {
+        sprintf(cell, " %03X",display[i][j]);
+      }
       Serial.print(cell);
       }
       Serial.println();
     }
     lastDisplayRefresh = millis();
   }
- 
-void sendAnnouncements() {
-  //CAN.sendMsgBuf(CAN_RADIO_SOUND_PROFILE, 0, msgProfile1Len, msgProfile1);
-  //delay(CAN_DELAY_AFTER_SEND);
-}
 
 unsigned int canId = 0;
 unsigned char len = 0;
 unsigned char buf[8];
-unsigned char newMode = 0;
 
 int inArray(int val, int arr[]) {
   for (int i = 0; i < filter_len; i++) {
@@ -104,8 +89,9 @@ void checkIncomingMessages() {
   memset(buf, 0, 8);
   CAN.readMsgBuf(&len, buf);
   canId = CAN.getCanId();
+
 #ifdef SCANNER
-  // All messages on the c-bus
+  // All messages on the c-bus to csv
   Serial.print(canId, HEX);
   for (int i = 0; i < len; i++) {
     Serial.print(",");
@@ -115,15 +101,16 @@ void checkIncomingMessages() {
   return;
 #endif
 
-
 #ifdef FILTERED_SCANNER
-  // Targeted (can_id_filter) messages on the c-bus, csv
+  // Targeted (can_id_filter) messages on the c-bus, as csv
   int index = inArray(canId, can_id_filter);
   if(index<99) {
     display[index][0] = canId;
-    for (int i = 1; i <= MESSAGE_LEN; i++) {
-      display[index][i] = buf[i];
+    for (int i = 0; i < MESSAGE_LEN; i++) {
+      display[index][i+1] = buf[i];
     }
+    // Add time since last message ms
+    display[index][MESSAGE_LEN+2] = millis() - display[index][MESSAGE_LEN+2]
     if (millis() > lastDisplayRefresh + DISPLAY_REFRESH_PERIOD) {
       displayScr();
     }
@@ -134,4 +121,9 @@ void checkIncomingMessages() {
 
 void loop() {
   checkIncomingMessages();
+#ifdef FILTER_PERIOD
+  if (millis() > filterStarted) {
+    break;
+  }
+#endif
 }
