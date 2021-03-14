@@ -16,7 +16,7 @@ unsigned long lastAnnounce = millis();
 // Messages needed to control Boston amp
 #define msgProfile1Len 7
 #define msgProfile1CanId CAN_RADIO_SOUND_PROFILE
-unsigned char msgProfile1[7] = {25, 40, 0x0B, 0x0B, 0x0B, 0x0B, 0xff};
+unsigned char msgProfile1[7] = {25, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
 // Last item: try 0x00, 0xff, 0x13, 0x1f
 
 // Existing with jeep radio (unknown)
@@ -60,7 +60,7 @@ void setup() {
 void sendAnnouncements() {
   CAN.sendMsgBuf(msgProfile1CanId, 0, msgProfile1Len, msgProfile1);
   delay(CAN_DELAY_AFTER_SEND);
-
+/*
   CAN.sendMsgBuf(msgProfile2CanId, 0, msgProfile2Len, msgProfile2);
   delay(CAN_DELAY_AFTER_SEND);
   
@@ -72,6 +72,7 @@ void sendAnnouncements() {
 
   CAN.sendMsgBuf(msgProfile5CanId, 0, msgProfile5Len, msgProfile5);
   delay(CAN_DELAY_AFTER_SEND);
+*/
 }
 
 unsigned int canId = 0;
