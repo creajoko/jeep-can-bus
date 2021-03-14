@@ -16,6 +16,8 @@
 // 0x3A0
 // 0x3D0 - sound profile Can Id, balance, fade, bass, mid, treble, ??, 0ff,
 // 1- min/left/front/A-mitt/13-max/right/back
+// 3D0 01C 00A 00A 00A 00A 00A 000 000 966
+
 // 0x3F8
 // 0x9F - from radio!
 
