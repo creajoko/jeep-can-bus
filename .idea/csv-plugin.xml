@@ -59,6 +59,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\project\can-bus-dumps\stereosoundctrl.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\project\python-utils\messages_not_in_baseline.py">
           <value>
             <Attribute>
