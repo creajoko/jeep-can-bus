@@ -15,9 +15,9 @@ unsigned long filterStarted = millis();
 unsigned long lastDisplayRefresh = 0;
 
 // Operational control
-//#define SCANNER
-#define FILTERED_SCANNER
-//#define FILTER_PERIOD 2000 // Stop after ms
+#define SCANNER
+//#define FILTERED_SCANNER
+#define FILTER_PERIOD 3000 // Stop after ms
 
 // Filtersetting max 20
 //int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
@@ -89,6 +89,7 @@ void checkIncomingMessages() {
 
 #ifdef SCANNER
   // All messages on the c-bus to csv
+//  if(canId != 0x3D0) {return;}
   Serial.print(canId, HEX);
   for (int i = 0; i < len; i++) {
     Serial.print(",");

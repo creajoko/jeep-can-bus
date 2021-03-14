@@ -6,7 +6,7 @@
 
 #define CAN_MODULE_CS_PIN 9
 #define ANNOUNCE_PERIOD_MS 1000
-#define CAN_DELAY_AFTER_SEND 20
+#define CAN_DELAY_AFTER_SEND 40
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
@@ -16,7 +16,7 @@ unsigned long lastAnnounce = millis();
 // Messages needed to control Boston amp
 #define msgProfile1Len 7
 #define msgProfile1CanId CAN_RADIO_SOUND_PROFILE
-unsigned char msgProfile1[7] = {20, 20, 0x0B, 0x0B, 0x0B, 0x0B, 0xff};
+unsigned char msgProfile1[7] = {25, 40, 0x0B, 0x0B, 0x0B, 0x0B, 0xff};
 // Last item: try 0x00, 0xff, 0x13, 0x1f
 
 // Existing with jeep radio (unknown)
@@ -57,14 +57,16 @@ void setup() {
 void sendAnnouncements() {
   CAN.sendMsgBuf(msgProfile1CanId, 0, msgProfile1Len, msgProfile1);
   delay(CAN_DELAY_AFTER_SEND);
-/*
+
   CAN.sendMsgBuf(msgProfile2CanId, 0, msgProfile2Len, msgProfile2);
   delay(CAN_DELAY_AFTER_SEND);
+  
   CAN.sendMsgBuf(msgProfile3CanId, 0, msgProfile3Len, msgProfile3);
   delay(CAN_DELAY_AFTER_SEND);
+
   CAN.sendMsgBuf(msgProfile4CanId, 0, msgProfile4Len, msgProfile4);
   delay(CAN_DELAY_AFTER_SEND);
-*/
+
 }
 
 unsigned int canId = 0;
