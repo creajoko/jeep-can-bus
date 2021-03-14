@@ -15,7 +15,7 @@ unsigned long lastAnnounce = millis();
 
 // Messages needed to control Boston amp
 #define msgProfile1Len 7
-unsigned char msgProfile1[7] = {0x14, 0x0B, 0x0B, 0x0B, 00x0B, 00x0B, 0xFF};
+unsigned char msgProfile1[7] = {5, 20, 0x0B, 0x0B, 0x0B, 0x0B, 0xff};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
@@ -35,7 +35,7 @@ void setup() {
 
 void sendAnnouncements() {
   CAN.sendMsgBuf(CAN_RADIO_SOUND_PROFILE, 0, msgProfile1Len, msgProfile1);
-  delay(CAN_DELAY_AFTER_SEND);
+  delay(CAN_DELAY_AFTER_SEND); 
 }
 
 unsigned int canId = 0;
@@ -56,6 +56,5 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-  }
   handleIncomingMessages();
 }
