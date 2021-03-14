@@ -12,7 +12,7 @@
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
 unsigned long lastAnnounce = millis();
-unsigned long lastProfileChange = 0
+unsigned long lastProfileChange = 0;
 
 // Messages needed to control Boston amp
 unsigned char msg1[7] = {20, 10, 1, 10, 10, 10, 10};
@@ -22,8 +22,8 @@ unsigned char msgPowerOn[8] = {0xFD,0x1B,0x3F,0xFF,0xFF,0xFF,0xFF,0xFF};
 const char compileDate[] = __DATE__ " " __TIME__;
 /*
 */
-void sendAnnouncements(profile) {
-  if (profile) {}
+void sendAnnouncements(unsigned char &profile) {
+  if (profile) {
     CAN.sendMsgBuf(CAN_RADIO_SOUND_PROFILE, 0, sizeof(profile), profile);
     delay(CAN_DELAY_AFTER_SEND);
   }
@@ -66,7 +66,7 @@ unsigned char currProfile = 1;
 void loop() {
     if (millis() > lastAnnounce + ANNOUNCE_PERIOD_MS) {
       lastAnnounce = millis();
-      sendAnnouncements();
+      sendAnnouncements({});
     }
    if (millis() > lastProfileChange + PROFILE_CHANGE_PERIOD_MS) {
         lastProfileChange = millis();
