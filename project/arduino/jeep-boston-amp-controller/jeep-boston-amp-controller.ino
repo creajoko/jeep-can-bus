@@ -6,7 +6,7 @@
 
 #define CAN_MODULE_CS_PIN 9
 #define ANNOUNCE_PERIOD_MS 1000
-#define CAN_DELAY_AFTER_SEND 40
+#define CAN_DELAY_AFTER_SEND 50
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
@@ -36,7 +36,10 @@ unsigned char msgProfile3[8] = {0xFD,0x1B,0x3F,0xFF,0xFF,0xFF,0xFF,0xFF};
 #define msgProfile4CanId 0x1BB
 unsigned char msgProfile4[6] = {0,0,0,0,0,0};
 
-// Skipping 095 radio mode AM/FM/CD
+//
+#define msgProfile5Len 8
+#define msgProfile5CanId CAN_RADIO_MODE
+unsigned char msgProfile5[8] = {0x51,0x14,0x1F,0x1,0xFF,0xFF,0xFF,0x1F};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
@@ -67,6 +70,8 @@ void sendAnnouncements() {
   CAN.sendMsgBuf(msgProfile4CanId, 0, msgProfile4Len, msgProfile4);
   delay(CAN_DELAY_AFTER_SEND);
 
+  CAN.sendMsgBuf(msgProfile5CanId, 0, msgProfile5Len, msgProfile5);
+  delay(CAN_DELAY_AFTER_SEND);
 }
 
 unsigned int canId = 0;

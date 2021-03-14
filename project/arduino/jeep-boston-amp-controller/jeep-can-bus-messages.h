@@ -17,17 +17,24 @@
 // 0x3D0 - sound profile Can Id, balance, fade, bass, mid, treble, ??, 0ff,
 // 1- min/left/front/A-mitt/13-max/right/back
 // 3D0 01C 00A 00A 00A 00A 00A 000 000 966
-
 // 0x3F8
 // 0x9F - from radio!
 
-// Ids added when Jeep stereo is connected (off)
+// Ids added when Jeep stereo is connected (still off)
 // 0x1AB
+// 0x1BB
 // 0x416 (radio power)
 // 0x394 - Radio setting / frequency etc
 // ox3D0 - Sound profile
-// 0x1BB
 // 0x9F - from radio
+
+// Ids added when Android radio is connected (on)
+//0x1ab 1
+//0x1bb 1
+//0x394 1
+//0x415 1
+
+
 
 // TBD
 // 0x2C0
@@ -153,7 +160,8 @@ Least common:      FE 3B 3F FF FF FF FF FF
     Byte 3 : Bass    01 -> 19  (-9 -> +9) 10 => Center
     Byte 4 : Mid     01 -> 19  (-9 -> +9) 10 => Center
     Byte 5 : Treble  01 -> 19  (-9 -> +9) 10 => Center
-    Byte 6 : On x13 Off x00 ?
+    Byte 6 : On x13 Off x00 ????
+    Joko: $ff when radio is attached, $00 when not (source indication?)
 
 394 :: EVIC (Electronic vehicle information centre) :: FM and AM Mode
   Byte 0   : Same as 09F ( for 0.0 and 0.1 )

@@ -66,6 +66,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\project\can-bus-dumps\wheel-radio-ctrl.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="&#9;" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\project\python-utils\messages_not_in_baseline.py">
           <value>
             <Attribute>
