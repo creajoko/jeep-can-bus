@@ -15,25 +15,25 @@ unsigned long lastAnnounce = millis();
 
 // Messages needed to control Boston amp
 #define msgProfile1Len 7
-#define msgProfile1CanId = CAN_RADIO_SOUND_PROFILE
+#define msgProfile1CanId CAN_RADIO_SOUND_PROFILE
 unsigned char msgProfile1[7] = {20, 20, 0x0B, 0x0B, 0x0B, 0x0B, 0xff};
 // Last item: try 0x00, 0xff, 0x13, 0x1f
 
 // Existing with jeep radio (unknown)
 #define msgProfile2Len 6
-#define msgProfile2CanId = 0x1AB
+#define msgProfile2CanId 0x1AB
 unsigned char msgProfile2[6] = {3,0,0,0,0,0};
 
 // Radio power 416	FD	1B	3F	FF	FF	FF	FF	FF
 #define msgProfile3Len 8
-#define msgProfile3CanId = 0x416
+#define msgProfile3CanId 0x416
 unsigned char msgProfile3[8] = {0xFD,0x1B,0x3F,0xFF,0xFF,0xFF,0xFF,0xFF};
 
 // Skipping 394 radio informs about frequency
 
 // Existing with jeep radio (unknown) 1BB	0	0	0	0	0	0
 #define msgProfile4Len 6
-#define msgProfile4CanId = 0x1BB
+#define msgProfile4CanId 0x1BB
 unsigned char msgProfile4[6] = {0,0,0,0,0,0};
 
 // Skipping 095 radio mode AM/FM/CD
