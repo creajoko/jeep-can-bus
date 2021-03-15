@@ -17,7 +17,7 @@ unsigned long lastAnnounce = millis();
 #define msgProfile1Len 7
 #define msgProfile1CanId CAN_RADIO_SOUND_PROFILE
 unsigned char msgProfile1[7] = {25, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
-// Last item: try 0x00, 0xff, 0x13, 0x1f
+// vol 0-38, övriga 1-19
 
 // Existing with jeep radio (unknown)
 #define msgProfile2Len 6
@@ -93,5 +93,5 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-  handleIncomingMessages();
+  // handleIncomingMessages();
 }
