@@ -6,7 +6,7 @@
 
 #define CAN_MODULE_CS_PIN 9
 #define ANNOUNCE_PERIOD_MS 1000
-#define CAN_DELAY_AFTER_SEND 50
+#define CAN_DELAY_AFTER_SEND 100
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
@@ -14,37 +14,40 @@ unsigned long lastCheck = 0;
 unsigned long lastAnnounce = millis();
 
 // Messages needed to control Boston amp
+// Sound profile
 #define msgProfile1Len 7
-#define msgProfile1CanId CAN_RADIO_SOUND_PROFILE
-unsigned char msgProfile1[7] = {25, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
+#define msgProfile1CanId 0x3D0
+unsigned char msgProfile1[7] = {0x1A, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
 // vol 0-38, övriga 1-19
 
-// Existing with jeep radio (unknown)
-#define msgProfile2Len 6
-#define msgProfile2CanId 0x1AB
-unsigned char msgProfile2[6] = {3,0,0,0,0,0};
+// 3F1 Radio On 0 / Off 1
+#define msgProfile2Len 2
+#define msgProfile2CanId 0x3F1
+unsigned char msgProfile2[2] = {0x41,0};
 
-// Radio power 416	FD	1B	3F	FF	FF	FF	FF	FF
+// Radio start up status 8 started
 #define msgProfile3Len 8
-#define msgProfile3CanId 0x416
-unsigned char msgProfile3[8] = {0xFD,0x1B,0x3F,0xFF,0xFF,0xFF,0xFF,0xFF};
+#define msgProfile3CanId 0x159
+unsigned char msgProfile3[8] = {0x08,0xFF,0xFF,0xFF,0x01,0xFF,0x00,0x08};
 
-// Skipping 394 radio informs about frequency
+// Skipping 394 radio informs about frequency on display EVIC
 
-// Existing with jeep radio (unknown) 1BB	0	0	0	0	0	0
-#define msgProfile4Len 6
-#define msgProfile4CanId 0x1BB
-unsigned char msgProfile4[6] = {0,0,0,0,0,0};
-
-//
-#define msgProfile5Len 8
-#define msgProfile5CanId CAN_RADIO_MODE
-unsigned char msgProfile5[8] = {0x51,0x14,0x1F,0x1,0xFF,0xFF,0xFF,0x1F};
+// Radio mode
+#define msgProfile4Len 8
+#define msgProfile4CanId 0x09F
+unsigned char msgProfile4[8] = {0x01,0x13,0x9D,0x01,0xFF,0xFF,0xFF,0x11};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
+void clearScr() {
+  Serial.write(27);
+  Serial.print("[2J");
+  Serial.write(27);
+  Serial.print("[H");
+}
 void setup() {
   Serial.begin(115200);
+  clearScr();
   Serial.print("Jeep Boston Sound Systems amplifier controller");
   Serial.print("(c) Joakim Korling");
   Serial.println(compileDate);
@@ -60,7 +63,7 @@ void setup() {
 void sendAnnouncements() {
   CAN.sendMsgBuf(msgProfile1CanId, 0, msgProfile1Len, msgProfile1);
   delay(CAN_DELAY_AFTER_SEND);
-/*
+
   CAN.sendMsgBuf(msgProfile2CanId, 0, msgProfile2Len, msgProfile2);
   delay(CAN_DELAY_AFTER_SEND);
   
@@ -69,10 +72,6 @@ void sendAnnouncements() {
 
   CAN.sendMsgBuf(msgProfile4CanId, 0, msgProfile4Len, msgProfile4);
   delay(CAN_DELAY_AFTER_SEND);
-
-  CAN.sendMsgBuf(msgProfile5CanId, 0, msgProfile5Len, msgProfile5);
-  delay(CAN_DELAY_AFTER_SEND);
-*/
 }
 
 unsigned int canId = 0;

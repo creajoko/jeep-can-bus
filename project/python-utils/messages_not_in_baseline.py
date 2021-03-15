@@ -91,8 +91,8 @@ def summary_top_n(n):
 
 def added_by_radio(n):
     print("Messages associated to connecting jeep radio")
-    ctr_base, log_base = read_log("baseline.csv")
-    ctr_no_stereo, log_no_stereo = read_log("androidradioon.csv")
+    ctr_base, log_base = read_log("jeep-radio-off.csv")
+    ctr_no_stereo, log_no_stereo = read_log("jeep-radio-onoff-10.csv")
     print("Codes added by radio")
     ctr_substract = substract(ctr_base, ctr_no_stereo)
     print_top_n_codes(n, ctr_substract)
@@ -108,17 +108,21 @@ def added_by_cruisctrl(n):
 def equal_message(a, b):
     return a == b
 
-def number_of_message_types_baseline_vs_cruisctrl_pressing(n):
-    ctr_base, log_base = read_log("baseline.csv")
+def number_of_message_types(n):
+    ctr_base, log_base = read_log("jeep-radio-off.csv")
     log_base.sort(key=lambda item: item[0])
-    ctr_cruisectrl, log_cruisectrl = read_log("cruisectrl.csv")
+    ctr_cruisectrl, log_cruisectrl = read_log("jeep-radio-onoff-10.csv")
     log_cruisectrl.sort(key=lambda item: item[0])
     i = 0
     for row in log_base:
-        print(f"{row[0]} {row[1]} vs {hex(log_cruisectrl[i][0])} {hex(log_cruisectrl[i][1])}")
+        print(f"{hex(row[0])} {hex(row[1])} vs {hex(log_cruisectrl[i][0])} {hex(log_cruisectrl[i][1])}")
         i += 1
 
+def number_of_message_types(n):
+    ctr_base, log_base = read_log("jeep-radio-off.csv")
+    log_base.sort(key=lambda item: item[0])
+    ctr_cruisectrl, log_cruisectrl = read_log("jeep-radio-onoff-10.csv")
 
-added_by_radio(100)
+#added_by_radio(100)
 # added_by_cruisctrl(100)
-# number_of_message_types_baseline_vs_cruisctrl_pressing(100)
+number_of_message_types(100)
