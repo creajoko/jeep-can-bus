@@ -2,14 +2,15 @@
 #include <SPI.h>
 #include <stdio.h>
 #include "mcp_can.h"
+#include "mcp2515_can.h"
 #include "jeep-can-bus-messages.h"
 
-
-#define CAN_MODULE_CS_PIN 9
 #define DISPLAY_REFRESH_PERIOD 500
 #define MESSAGE_LEN 8
 
-MCP_CAN CAN(CAN_MODULE_CS_PIN);
+const int SPI_CS_PIN = 9;
+const int CAN_INT_PIN = 2;
+mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
 
 unsigned long filterStarted = millis();
 unsigned long lastDisplayRefresh = 0;
@@ -96,8 +97,8 @@ void checkIncomingMessages() {
     Serial.print(buf[i], HEX);
   }
   // Recieve Request
-  Serial.print(",")
-  Serial.print(CAN.isRemoteRequest(), HEX)
+  Serial.print(",");
+  Serial.print(CAN.isRemoteRequest(), HEX);
   Serial.println();
   return;
 #endif

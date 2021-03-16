@@ -3,15 +3,16 @@
 #include <stdio.h>
 #include "mcp_can.h"
 #include "jeep-can-bus-messages.h"
-
-#define CAN_MODULE_CS_PIN 9
+#include "mcp2515_can.h"
 
 #define ANNOUNCE_PERIOD_MS 1000
 #define CAN_DELAY_AFTER_SEND 100
 
-//const int CAN_INT_PIN = 2;
+const int SPI_CS_PIN = 9;
+const int CAN_INT_PIN = 2;
 
-MCP_CAN CAN(CAN_MODULE_CS_PIN);
+
+mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
 
 unsigned long lastCheck = 0;
 unsigned long lastAnnounce = millis();
