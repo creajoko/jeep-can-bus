@@ -95,6 +95,9 @@ void checkIncomingMessages() {
     Serial.print(",");
     Serial.print(buf[i], HEX);
   }
+  // Recieve Request
+  Serial.print(",")
+  Serial.print(CAN.isRemoteRequest(), HEX)
   Serial.println();
   return;
 #endif
@@ -109,6 +112,7 @@ void checkIncomingMessages() {
     }
     display[index][MESSAGE_LEN+2] = millis() - display[index][MESSAGE_LEN+1];    
     display[index][MESSAGE_LEN+1] = millis();
+    display[index][MESSAGE_LEN+3] = CAN.isRemoteRequest()
     if (millis() > lastDisplayRefresh + DISPLAY_REFRESH_PERIOD) {
       displayScr();
     }

@@ -5,8 +5,11 @@
 #include "jeep-can-bus-messages.h"
 
 #define CAN_MODULE_CS_PIN 9
+
 #define ANNOUNCE_PERIOD_MS 1000
 #define CAN_DELAY_AFTER_SEND 100
+
+//const int CAN_INT_PIN = 2;
 
 MCP_CAN CAN(CAN_MODULE_CS_PIN);
 
@@ -39,39 +42,40 @@ unsigned char msgProfile4[8] = {0x01,0x13,0x9D,0x01,0xFF,0xFF,0xFF,0x11};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
-void clearScr() {
-  Serial.write(27);
-  Serial.print("[2J");
-  Serial.write(27);
-  Serial.print("[H");
-}
 void setup() {
   Serial.begin(115200);
-
   Serial.print("Jeep Boston Sound Systems amplifier controller");
   Serial.print("(c) Joakim Korling");
   Serial.println(compileDate);
+
   while (CAN_OK != CAN.begin(CAN_83K3BPS, MCP_16MHz)) {
     Serial.println("CAN init fail");
     delay(250);
   }
+
+  CAN.setMode(MODE_NORMAL);
   Serial.println("CAN init ok");
-  delay(1000);
-  clearScr();
 }
 
 void sendAnnouncements() {
-  CAN.sendMsgBuf(msgProfile1CanId, 0, msgProfile1Len, msgProfile1);
+  byte sndStat = CAN.sendMsgBuf(msgProfile1CanId, 0, msgProfile1Len, msgProfile1);
+  Serial.print("Message: ");
+  Serial.print(msgProfile1CanId, HEX);
+  if(sndStat == CAN_OK){
+    Serial.println("-OK");
+  } else {
+    Serial.println("-Failed");
+  }
   delay(CAN_DELAY_AFTER_SEND);
-
   CAN.sendMsgBuf(msgProfile2CanId, 0, msgProfile2Len, msgProfile2);
   delay(CAN_DELAY_AFTER_SEND);
-  
+
   CAN.sendMsgBuf(msgProfile3CanId, 0, msgProfile3Len, msgProfile3);
   delay(CAN_DELAY_AFTER_SEND);
-
+/*
   CAN.sendMsgBuf(msgProfile4CanId, 0, msgProfile4Len, msgProfile4);
   delay(CAN_DELAY_AFTER_SEND);
+*/
 }
 
 unsigned int canId = 0;
@@ -92,5 +96,5 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-  // handleIncomingMessages();
+    handleIncomingMessages();
 }
