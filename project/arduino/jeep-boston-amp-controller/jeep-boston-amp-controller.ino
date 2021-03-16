@@ -21,7 +21,7 @@ unsigned long lastAnnounce = millis();
 // Sound profile
 #define msgProfile1Len 7
 #define msgProfile1CanId 0x3D0
-unsigned char msgProfile1[7] = {15, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
+unsigned char msgProfile1[7] = {20, 19, 10, 0x0B, 0x0B, 0x0B, 0xff};
 // vol 0-38, övriga 1-19
 
 // 3F1 Radio On 0 / Off 1
@@ -59,7 +59,8 @@ void setup() {
 }
 
 void sendAnnouncements() {
-  byte sndStat = CAN.sendMsgBuf(msgProfile1CanId, 0, msgProfile1Len, msgProfile1);
+  CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true); //1 bryr sig ej, 0-reagerar men går tillbaka
+  /*
   Serial.print("Message: ");
   Serial.print(msgProfile1CanId, HEX);
   if(sndStat == CAN_OK){
@@ -67,16 +68,17 @@ void sendAnnouncements() {
   } else {
     Serial.println("-Failed");
   }
+ */
   delay(CAN_DELAY_AFTER_SEND);
-  CAN.sendMsgBuf(msgProfile2CanId, 0, msgProfile2Len, msgProfile2);
+  CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true);
   delay(CAN_DELAY_AFTER_SEND);
 
-  CAN.sendMsgBuf(msgProfile3CanId, 0, msgProfile3Len, msgProfile3);
+  CAN.sendMsgBuf(msgProfile3CanId, 0,0,  msgProfile3Len, msgProfile3, true);
   delay(CAN_DELAY_AFTER_SEND);
-/*
-  CAN.sendMsgBuf(msgProfile4CanId, 0, msgProfile4Len, msgProfile4);
+
+  CAN.sendMsgBuf(msgProfile4CanId, 0,0,  msgProfile4Len, msgProfile4, true);
   delay(CAN_DELAY_AFTER_SEND);
-*/
+  
 }
 
 unsigned int canId = 0;
@@ -85,11 +87,13 @@ unsigned char buf[8];
 unsigned char newMode = 0;
 
 void handleIncomingMessages() {
+  /*
   if (CAN_MSGAVAIL != CAN.checkReceive())
     return;
   CAN.readMsgBuf(&len, buf);
   canId = CAN.getCanId();
   // Do nothing for now - add control via steeringwheel buttons
+*/
 }
 
 void loop() {
@@ -97,5 +101,5 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-    handleIncomingMessages();
+    //handleIncomingMessages();
 }
