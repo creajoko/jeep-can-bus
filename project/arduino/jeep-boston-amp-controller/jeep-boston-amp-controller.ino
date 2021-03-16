@@ -17,7 +17,7 @@ unsigned long lastAnnounce = millis();
 // Sound profile
 #define msgProfile1Len 7
 #define msgProfile1CanId 0x3D0
-unsigned char msgProfile1[7] = {0x1A, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
+unsigned char msgProfile1[7] = {15, 19, 19, 0x0B, 0x0B, 0x0B, 0xff};
 // vol 0-38, övriga 1-19
 
 // 3F1 Radio On 0 / Off 1
@@ -47,17 +47,17 @@ void clearScr() {
 }
 void setup() {
   Serial.begin(115200);
-  clearScr();
+
   Serial.print("Jeep Boston Sound Systems amplifier controller");
   Serial.print("(c) Joakim Korling");
   Serial.println(compileDate);
-  Serial.begin(115200);
-
   while (CAN_OK != CAN.begin(CAN_83K3BPS, MCP_16MHz)) {
     Serial.println("CAN init fail");
     delay(250);
   }
   Serial.println("CAN init ok");
+  delay(1000);
+  clearScr();
 }
 
 void sendAnnouncements() {
