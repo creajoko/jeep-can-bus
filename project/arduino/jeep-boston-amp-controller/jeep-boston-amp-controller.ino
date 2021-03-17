@@ -53,23 +53,27 @@ void setup() {
     Serial.println("CAN init fail");
     delay(250);
   }
-
   CAN.setMode(MODE_NORMAL);
   Serial.println("CAN init ok");
 }
 
-void sendAnnouncements() {
-  CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true); //1 bryr sig ej, 0-reagerar men går tillbaka
-  /*
+void printSendStatus(unsigned int can_id, unsigned char sndStat) {
   Serial.print("Message: ");
-  Serial.print(msgProfile1CanId, HEX);
+  Serial.print(can_id, HEX);
   if(sndStat == CAN_OK){
     Serial.println("-OK");
   } else {
     Serial.println("-Failed");
   }
- */
+}
+
+void sendAnnouncements() {
+  //rtr bit1 bryr sig ej, 0-reagerar men går tillbaka
+  printSendStatus(
+    CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true);
+  )
   delay(CAN_DELAY_AFTER_SEND);
+
   CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true);
   delay(CAN_DELAY_AFTER_SEND);
 
