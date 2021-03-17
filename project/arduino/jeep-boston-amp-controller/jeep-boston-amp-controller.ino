@@ -11,7 +11,6 @@
 const int SPI_CS_PIN = 9;
 const int CAN_INT_PIN = 2;
 
-
 mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
 
 unsigned long lastCheck = 0;
@@ -94,13 +93,11 @@ unsigned char buf[8];
 unsigned char newMode = 0;
 
 void handleIncomingMessages() {
-  /*
   if (CAN_MSGAVAIL != CAN.checkReceive())
     return;
   CAN.readMsgBuf(&len, buf);
   canId = CAN.getCanId();
-  // Do nothing for now - add control via steeringwheel buttons
-*/
+  // Do nothing for now - add control via steering wheel buttons
 }
 
 void loop() {
@@ -108,5 +105,5 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-    //handleIncomingMessages();
+    handleIncomingMessages();
 }
