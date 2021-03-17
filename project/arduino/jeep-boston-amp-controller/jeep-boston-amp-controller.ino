@@ -70,11 +70,14 @@ void printSendStatus(unsigned int can_id, unsigned char sndStat) {
 void sendAnnouncements() {
   //rtr bit1 bryr sig ej, 0-reagerar men går tillbaka
   printSendStatus(
-    CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true);
-  )
+    msgProfile1CanId,
+    CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true)
+  );
   delay(CAN_DELAY_AFTER_SEND);
-
-  CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true);
+  printSendStatus(
+    msgProfile2CanId,
+    CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true)
+  );
   delay(CAN_DELAY_AFTER_SEND);
 
   CAN.sendMsgBuf(msgProfile3CanId, 0,0,  msgProfile3Len, msgProfile3, true);
