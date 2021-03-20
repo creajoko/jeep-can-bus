@@ -78,13 +78,13 @@ void sendAnnouncements() {
     CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true)
   );
   delay(CAN_DELAY_AFTER_SEND);
-
+/*
   CAN.sendMsgBuf(msgProfile3CanId, 0,0,  msgProfile3Len, msgProfile3, true);
   delay(CAN_DELAY_AFTER_SEND);
 
   CAN.sendMsgBuf(msgProfile4CanId, 0,0,  msgProfile4Len, msgProfile4, true);
   delay(CAN_DELAY_AFTER_SEND);
-  
+*/
 }
 
 unsigned int canId = 0;
