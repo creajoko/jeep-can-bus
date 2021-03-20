@@ -59,6 +59,34 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\project\can-bus-dumps\can-bus-startup\android-key-in.txt">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\project\can-bus-dumps\can-bus-startup\ignition-jeep-off.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\project\can-bus-dumps\can-bus-startup\ignition-jeep-on.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\project\can-bus-dumps\can-bus-startup\key-in-android-on.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\project\can-bus-dumps\stereosoundctrl.csv">
           <value>
             <Attribute>

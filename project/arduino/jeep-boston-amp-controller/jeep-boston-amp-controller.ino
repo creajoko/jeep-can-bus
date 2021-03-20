@@ -20,25 +20,36 @@ unsigned long lastAnnounce = millis();
 // Sound profile
 #define msgProfile1Len 7
 #define msgProfile1CanId 0x3D0
-unsigned char msgProfile1[7] = {25, 19, 10, 0x0B, 0x0B, 0x0B, 0x00};
+unsigned char msgProfile1[msgProfile1Len] = {25, 19, 10, 0x0B, 0x0B, 0x0B, 0x00};
 // vol 0-38, övriga 1-19
 
 // 3F1 Radio On 0 / Off 1
 #define msgProfile2Len 2
 #define msgProfile2CanId 0x3F1
-unsigned char msgProfile2[2] = {0x41,0};
+unsigned char msgProfile2[msgProfile2Len] = {0x41,0};
 
 // Radio start up status 8 started
 #define msgProfile3Len 8
 #define msgProfile3CanId 0x159
-unsigned char msgProfile3[8] = {0x08,0xFF,0xFF,0xFF,0x01,0xFF,0x00,0x08};
+unsigned char msgProfile3[msgProfile3Len] = {0x08,0xFF,0xFF,0xFF,0x01,0xFF,0x00,0x08};
 
 // Skipping 394 radio informs about frequency on display EVIC
 
 // Radio mode
 #define msgProfile4Len 8
 #define msgProfile4CanId 0x09F
-unsigned char msgProfile4[8] = {0x01,0x13,0x9D,0x01,0xFF,0xFF,0xFF,0x11};
+unsigned char msgProfile4[msgProfile4Len] = {0x01,0x13,0x9D,0x01,0xFF,0xFF,0xFF,0x11};
+
+// CAN-BUS Startup messages
+bool startups_sent = false
+#define msgProfile10Len 6
+#define msgProfile10CanId 0x1E2
+unsigned char msgProfile10[msgProfile10Len] = {0x07,0xAC,0xB0,0,0,0};
+
+// 3F4,B3,FF,AC,B0,0,0
+#define msgProfile11Len 6
+#define msgProfile11CanId 0x3F4
+unsigned char msgProfile11[msgProfile11Len] = {0xB3,0xFF,0xAC,0xB0,0,0};
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
@@ -67,12 +78,24 @@ void printSendStatus(unsigned int can_id, unsigned char sndStat) {
 }
 
 void sendAnnouncements() {
-  //rtr bit1 bryr sig ej, 0-reagerar men går tillbaka
+
+  if (!startups_sent){
+    CAN.sendMsgBuf(msgProfile10CanId, 0, 0, msgProfile10Len, msgProfile10, true);
+    delay(CAN_DELAY_AFTER_SEND);
+    CAN.sendMsgBuf(msgProfile11CanId, 0, 0, msgProfile11Len, msgProfile11, true);
+    delay(CAN_DELAY_AFTER_SEND);
+    CAN.sendMsgBuf(msgProfile12CanId, 0, 0, msgProfile12Len, msgProfile12, true);
+    delay(CAN_DELAY_AFTER_SEND);
+    startups_sent = true;
+    return;
+  }
   printSendStatus(
+  //rtr bit1 bryr sig ej, 0-reagerar men går tillbaka
     msgProfile1CanId,
     CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true)
   );
-/*  delay(CAN_DELAY_AFTER_SEND);
+  delay(CAN_DELAY_AFTER_SEND);
+/*
   printSendStatus(
     msgProfile2CanId,
     CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true)
@@ -101,9 +124,10 @@ void handleIncomingMessages() {
 }
 
 void loop() {
+    handleIncomingMessages();
     if (millis() > lastAnnounce + ANNOUNCE_PERIOD_MS) {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-    handleIncomingMessages();
+
 }
