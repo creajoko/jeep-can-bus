@@ -12,7 +12,7 @@ const int SPI_CS_PIN = 9;
 const int CAN_INT_PIN = 2;
 mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
 
-unsigned long filterStarted = millis();
+unsigned long filterStarted = 0;
 unsigned long lastDisplayRefresh = 0;
 
 // Operational control
@@ -98,7 +98,9 @@ void checkIncomingMessages() {
   }
   // Recieve Request
   if (CAN.isRemoteRequest()) {
-    Serial.print(",RTR");
+    Serial.println(",RTR");
+  } else {
+    Serial.println();
   }
   return;
 #endif
@@ -111,9 +113,12 @@ void checkIncomingMessages() {
     for (int i = 0; i < MESSAGE_LEN; i++) {
       display[index][i+1] = buf[i];
     }
+    // Timestamp and period
     display[index][MESSAGE_LEN+2] = millis() - display[index][MESSAGE_LEN+1];    
     display[index][MESSAGE_LEN+1] = millis();
+    // RTR request flag status
     display[index][MESSAGE_LEN+3] = CAN.isRemoteRequest()
+    
     if (millis() > lastDisplayRefresh + DISPLAY_REFRESH_PERIOD) {
       displayScr();
     }
@@ -125,6 +130,9 @@ void checkIncomingMessages() {
 void loop() {
   
 #ifdef FILTER_PERIOD
+  if (filterStarted == 0 and CAN_MSGAVAIL == CAN.checkReceive()) {
+    filterStarted = millis();
+  }
   if (millis() < filterStarted + FILTER_PERIOD) {
     checkIncomingMessages();
   }

@@ -20,7 +20,7 @@ unsigned long lastAnnounce = millis();
 // Sound profile
 #define msgProfile1Len 7
 #define msgProfile1CanId 0x3D0
-unsigned char msgProfile1[7] = {20, 19, 10, 0x0B, 0x0B, 0x0B, 0xff};
+unsigned char msgProfile1[7] = {25, 19, 10, 0x0B, 0x0B, 0x0B, 0x00};
 // vol 0-38, övriga 1-19
 
 // 3F1 Radio On 0 / Off 1
@@ -72,13 +72,13 @@ void sendAnnouncements() {
     msgProfile1CanId,
     CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true)
   );
-  delay(CAN_DELAY_AFTER_SEND);
+/*  delay(CAN_DELAY_AFTER_SEND);
   printSendStatus(
     msgProfile2CanId,
     CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true)
   );
   delay(CAN_DELAY_AFTER_SEND);
-/*
+
   CAN.sendMsgBuf(msgProfile3CanId, 0,0,  msgProfile3Len, msgProfile3, true);
   delay(CAN_DELAY_AFTER_SEND);
 
