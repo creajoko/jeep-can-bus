@@ -1,7 +1,7 @@
 def read_log(name: str):
     ctrs = {}
     log = []
-    with open(f"C:\\Users\\JK945591\\IdeaProjects\\jeep-can-bus\\project\\can-bus-dumps\\{name}") \
+    with open(f"C:\\Users\\JK945591\\IdeaProjects\\jeep-can-bus\\project\\can-bus-dumps\\" + name) \
             as f:
         lines = [line.rstrip() for line in f]
     # Count occurances of a code
@@ -90,10 +90,10 @@ def summary_top_n(n):
 
 
 def added_by_radio(n):
-    print("Messages associated to connecting jeep radio")
-    ctr_base, log_base = read_log("jeep-radio-off.csv")
-    ctr_no_stereo, log_no_stereo = read_log("jeep-radio-onoff-10.csv")
-    print("Codes added by radio")
+    print("Messages associated to connecting a radio")
+    ctr_base, log_base = read_log("can-bus-startup\\key-in-jeep-off.csv")
+    ctr_no_stereo, log_no_stereo = read_log("can-bus-startup\\key-in-android-off.csv")
+    print("Codes added by jeep")
     ctr_substract = substract(ctr_base, ctr_no_stereo)
     print_top_n_codes(n, ctr_substract)
 
@@ -123,6 +123,6 @@ def number_of_message_types(n):
     log_base.sort(key=lambda item: item[0])
     ctr_cruisectrl, log_cruisectrl = read_log("jeep-radio-onoff-10.csv")
 
-#added_by_radio(100)
+added_by_radio(100)
 # added_by_cruisctrl(100)
-number_of_message_types(100)
+#number_of_message_types(100)
