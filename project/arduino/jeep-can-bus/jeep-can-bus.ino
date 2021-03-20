@@ -20,7 +20,7 @@ unsigned long lastDisplayRefresh = 0;
 //#define FILTERED_SCANNER
 #define FILTER_PERIOD 3000 // Stop after ms
 
-// Filtersetting max 20
+// Filter scanner setting max 20
 //int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
 //unsigned int can_id_filter[] = {0x015};
 int can_id_filter[] = {CAN_RADIO_MODE,CAN_RADIO_CONTROLS,CAN_RADIO_SOUND_PROFILE};
@@ -97,9 +97,9 @@ void checkIncomingMessages() {
     Serial.print(buf[i], HEX);
   }
   // Recieve Request
-  Serial.print(",");
-  Serial.print(CAN.isRemoteRequest(), HEX);
-  Serial.println();
+  if (CAN.isRemoteRequest()) {
+    Serial.print(",RTR");
+  }
   return;
 #endif
 
