@@ -15,6 +15,7 @@ mcp2515_can CAN(SPI_CS_PIN); // Set CS pin
 
 unsigned long lastCheck = 0;
 unsigned long lastAnnounce = millis();
+bool can_bus_started = false;
 
 // Messages needed to control Boston amp
 // Sound profile
@@ -41,7 +42,7 @@ unsigned char msgProfile3[msgProfile3Len] = {0x08,0xFF,0xFF,0xFF,0x01,0xFF,0x00,
 unsigned char msgProfile4[msgProfile4Len] = {0x01,0x13,0x9D,0x01,0xFF,0xFF,0xFF,0x11};
 
 // CAN-BUS Startup messages
-bool startups_sent = false
+bool startups_sent = false;
 #define msgProfile10Len 6
 #define msgProfile10CanId 0x1E2
 unsigned char msgProfile10[msgProfile10Len] = {0x07,0xAC,0xB0,0,0,0};
@@ -127,7 +128,7 @@ unsigned int canId = 0;
 unsigned char len = 0;
 unsigned char buf[8];
 unsigned char newMode = 0;
-bool can_bus_started = false;
+
 
 void handleIncomingMessages() {
   if (CAN_MSGAVAIL != CAN.checkReceive())
