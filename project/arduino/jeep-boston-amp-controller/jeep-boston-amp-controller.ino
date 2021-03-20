@@ -21,7 +21,7 @@ bool can_bus_started = false;
 // Sound profile
 #define msgProfile1Len 7
 #define msgProfile1CanId 0x3D0
-unsigned char msgProfile1[msgProfile1Len] = {25, 19, 10, 0x0B, 0x0B, 0x0B, 0x00};
+unsigned char msgProfile1[msgProfile1Len] = {25, 19, 19, 11, 0x0B, 0x0B, 0x00};
 // vol 0-38, övriga 1-19
 
 // 3F1 Radio On 0 / Off 1
@@ -92,14 +92,16 @@ void sendAnnouncements() {
   if (!startups_sent and can_bus_started){
     CAN.sendMsgBuf(msgProfile12CanId, 0, 0, msgProfile12Len, msgProfile12, true);
     delay(CAN_DELAY_AFTER_SEND);
-/*
+
     CAN.sendMsgBuf(msgProfile11CanId, 0, 0, msgProfile11Len, msgProfile11, true);
     delay(CAN_DELAY_AFTER_SEND);
+    
     CAN.sendMsgBuf(msgProfile13CanId, 0, 0, msgProfile13Len, msgProfile13, true);
     delay(CAN_DELAY_AFTER_SEND);
+
     CAN.sendMsgBuf(msgProfile10CanId, 0, 0, msgProfile10Len, msgProfile10, true);
     delay(CAN_DELAY_AFTER_SEND);
-*/
+
     startups_sent = true;
     return;
   }
@@ -109,7 +111,7 @@ void sendAnnouncements() {
     CAN.sendMsgBuf(msgProfile1CanId, 0, 0, msgProfile1Len, msgProfile1, true)
   );
   delay(CAN_DELAY_AFTER_SEND);
-/*
+
   printSendStatus(
     msgProfile2CanId,
     CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true)
@@ -121,7 +123,7 @@ void sendAnnouncements() {
 
   CAN.sendMsgBuf(msgProfile4CanId, 0,0,  msgProfile4Len, msgProfile4, true);
   delay(CAN_DELAY_AFTER_SEND);
-*/
+
 }
 
 unsigned int canId = 0;
@@ -141,7 +143,7 @@ void handleIncomingMessages() {
 
 void loop() {
     handleIncomingMessages();
-    if (millis() > lastAnnounce + ANNOUNCE_PERIOD_MS) {
+    if (can_bus_started and millis() > lastAnnounce + ANNOUNCE_PERIOD_MS) {
       lastAnnounce = millis();
       sendAnnouncements();
     }
