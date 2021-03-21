@@ -5,8 +5,8 @@
 #include "jeep-can-bus-messages.h"
 #include "mcp2515_can.h"
 
-#define ANNOUNCE_PERIOD_MS 1000
-#define CAN_DELAY_AFTER_SEND 100
+#define ANNOUNCE_PERIOD_MS 500
+#define CAN_DELAY_AFTER_SEND 20
 
 const int SPI_CS_PIN = 9;
 const int CAN_INT_PIN = 2;
@@ -17,7 +17,6 @@ unsigned long lastCheck = 0;
 unsigned long lastAnnounce = millis();
 bool can_bus_started = false;
 
-// Messages needed to control Boston amp
 // Sound profile
 #define msgProfile1Len 7
 #define msgProfile1CanId 0x3D0
@@ -42,6 +41,7 @@ unsigned char msgProfile3[msgProfile3Len] = {0x08,0xFF,0xFF,0xFF,0x01,0xFF,0x00,
 unsigned char msgProfile4[msgProfile4Len] = {0x01,0x13,0x9D,0x01,0xFF,0xFF,0xFF,0x11};
 
 // CAN-BUS Startup messages
+//
 bool startups_sent = false;
 #define msgProfile10Len 6
 #define msgProfile10CanId 0x1E2
@@ -90,6 +90,7 @@ void printSendStatus(unsigned int can_id, unsigned char sndStat) {
 
 void sendAnnouncements() {
   if (!startups_sent and can_bus_started){
+  /*
     CAN.sendMsgBuf(msgProfile12CanId, 0, 0, msgProfile12Len, msgProfile12, true);
     delay(CAN_DELAY_AFTER_SEND);
 
@@ -101,7 +102,7 @@ void sendAnnouncements() {
 
     CAN.sendMsgBuf(msgProfile10CanId, 0, 0, msgProfile10Len, msgProfile10, true);
     delay(CAN_DELAY_AFTER_SEND);
-
+  */
     startups_sent = true;
     return;
   }
@@ -112,6 +113,7 @@ void sendAnnouncements() {
   );
   delay(CAN_DELAY_AFTER_SEND);
 
+  /*
   printSendStatus(
     msgProfile2CanId,
     CAN.sendMsgBuf(msgProfile2CanId, 0, 0, msgProfile2Len, msgProfile2, true)
@@ -123,6 +125,7 @@ void sendAnnouncements() {
 
   CAN.sendMsgBuf(msgProfile4CanId, 0,0,  msgProfile4Len, msgProfile4, true);
   delay(CAN_DELAY_AFTER_SEND);
+  */
 
 }
 
@@ -160,5 +163,4 @@ void loop() {
       lastAnnounce = millis();
       sendAnnouncements();
     }
-
 }

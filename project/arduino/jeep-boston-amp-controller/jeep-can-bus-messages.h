@@ -9,6 +9,34 @@
 #define CAN_RADIO_SOUND_PROFILE 0x3D0
 #define CAN_RADIO_POWER 0x416
 
+/*
+ID: 1A6 (steering wheel buttons)
+00 00 (ready)
+01 00 (menu up)
+04 00 (menu down)
+02 00 (menu right)
+08 00 (music button)
+10 00 (menu button)
+20 00 (vol up)
+80 00 (vol down)
+40 00 (nav button)
+Notes:
+00 00 must follow other commands to "ready" the system
+*/
+//Basically the only thing is required to enable AUX is to regularly (0.5sec) send 8 bytes command:
+// CAND ID 0x3dd, len 8, 03 00 00 00 00 00 00 00
+
+// Setting time from the radio unconfirmed
+// 0x0F0 message to SKREEM which keeps time and broadcasts it via 0x3EC
+// 0x00 key state
+// 0x210 lights status
+// every 100ms on newer radio
+//    canSend(0x000, keyState, 0x00, 0x00, 0x00, 0x00, 0x00); delay(5);                         //key position 00 = no key, 01 = key in, 41 = accessory, 81 = run, 21 = start
+//    canSend(0x015, 85, 121, 6, 255, 0,0); delay(5);                                           //this needs to be here to turn the radio on initially. ECM data (voltage, + 2 other plots, FF, 00, 00)
+//    canSend(0x1AF, 3, 131, 0, 192, 16, 44, 8, 0); delay(5);                                   //this needs to be here to keep the radio on or else it will shutoff after ~15 seconds (B0 changes from 3 to 1 to 3, the rest is static)
+//    canSend(0x210, lightsDriving, lightsDashIntensity, 0x00, 0x00, 0x00, 0x00); delay(5);     //illumination information B0 = driving lights (0,1,2,3), B1 = dash intensity (00-C8)
+//    canSend(0x3EC, timeH, timeM, timeS); delay(5);                                            //clock data, if this isn't here radio returns "no clock"
+//    canSend(0x3A0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00); delay(5);                             //steering wheel button states from cluster
 
 // Pressing steeringwheel radio ctrls
 // 0x15
@@ -57,6 +85,7 @@ SKREEM
 id:012 {0x01, 0x02, 0x00, 0x40, 0x87, 0xa5} -> Lock Doors
 id:012 {0x03, 0x02, 0x00, 0x40, 0x87, 0xa5} -> Unlock Doors
 id:012 {0x05, 0x02, 0x00, 0x40, 0x87, 0xa5} -> Trunk Release
+id:0x3EC - broadcast time!
 
 Radio Status... One mode at a time
 AM Radio Status
