@@ -138,7 +138,20 @@ void handleIncomingMessages() {
   CAN.readMsgBuf(&len, buf);
   canId = CAN.getCanId();
   can_bus_started = true;
-  // Do nothing for now - add control via steering wheel buttons
+  if(canId == 0x3D0) {
+    Serial.print(canId, HEX);
+    for (int i = 0; i < len; i++) {
+      Serial.print(",");
+      Serial.print(buf[i], HEX);
+    }
+    // Recieve Request
+    if (CAN.isRemoteRequest()) {
+      Serial.println(",RTR");
+    } else {
+      Serial.println();
+    }
+  }
+
 }
 
 void loop() {

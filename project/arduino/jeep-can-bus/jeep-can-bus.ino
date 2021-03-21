@@ -21,9 +21,9 @@ unsigned long lastDisplayRefresh = 0;
 //#define FILTER_PERIOD 3000 // Stop after ms
 
 // Filter scanner setting max 20
-//int can_id_filter[] = {0x015, 0x2C0, 0x3D0, 0x3F1, CAN_RADIO_MODE, 0x159, 0x1B6};
+int can_id_filter[] = {0x3D0, 0x394};
 //unsigned int can_id_filter[] = {0x015};
-int can_id_filter[] = {CAN_RADIO_SOUND_PROFILE};
+//int can_id_filter[] = {CAN_RADIO_SOUND_PROFILE};
 int filter_len = sizeof(can_id_filter);
 
 const char compileDate[] = __DATE__ " " __TIME__;
@@ -51,13 +51,18 @@ void clearScr() {
   
 void displayScr() {
   clearScr();
-  for(int i=0;i<15;i++) {
+  for(int i=0;i<10;i++) {
     for(int j=0;j<15;j++) {
       char cell[4];
-      if(j == MESSAGE_LEN+3 or j== MESSAGE_LEN+4) {
+      if(j == MESSAGE_LEN+3 or j == MESSAGE_LEN+4) {
         sprintf(cell, " %03d",display[i][j]);
       } else {
         sprintf(cell, " %03X",display[i][j]);
+      }
+      if(j == MESSAGE_LEN+1 or j == MESSAGE_LEN+2) {
+        Serial.print("   ");
+      } else {
+        Serial.print(cell);
       }
     }
     Serial.println();
@@ -108,10 +113,11 @@ void checkIncomingMessages() {
   if(index<99) {
     display[index][0] = canId;
     for (int i = 0; i < MESSAGE_LEN; i++) {
+      display[index][i+1] = 0;
       display[index][i+1] = buf[i];
     }
     // RTR request flag status
-    display[index][MESSAGE_LEN+4] = CAN.isRemoteRequest();
+    display[index][MESSAGE_LEN+5] = CAN.isRemoteRequest();
     //Timestamp
     display[index][MESSAGE_LEN+1] = display[index][MESSAGE_LEN+2];
     display[index][MESSAGE_LEN+2] = millis();
@@ -134,9 +140,10 @@ void loop() {
 #endif
 #ifdef FILTERED_SCANNER
   if (millis() > lastDisplayRefresh + DISPLAY_REFRESH_PERIOD) {
-    for ( int i=0; i< 15;i++) {
+    for ( int i=0; i< 10;i++) {
       // Timestamp and period
       display[i][MESSAGE_LEN+3] = display[i][MESSAGE_LEN+2] - display[i][MESSAGE_LEN+1];
+      display[i][MESSAGE_LEN+4] = (millis() - display[i][MESSAGE_LEN+2])/1000;
     } 
     displayScr();
   }
