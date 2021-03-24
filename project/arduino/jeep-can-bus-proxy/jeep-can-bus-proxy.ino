@@ -18,7 +18,7 @@ const char compileDate[] = __DATE__ " " __TIME__;
 
 void setup() {
   Serial.begin(115200);
-  Serial.print("Jeep CAN-bus proxy");
+  Serial.println("Jeep CAN-bus proxy");
   Serial.println(compileDate);
   Serial.begin(115200);
 
@@ -30,7 +30,7 @@ void setup() {
       Serial.println("CAN_RADIO init fail");
       delay(250);
   }
-  Serial.println("CAN PROXY init ok");
+  Serial.println("CAN-bus proxy init ok");
 }
 
 void manageMessagesFromJeep() {
@@ -60,7 +60,7 @@ void manageMessagesFromRadio() {
   canId = CAN_RADIO.getCanId();
   // Apply rules
   if (canId == 0x3D0) {
-    Serial.println("3D0 message towards Jeep!!!!")
+    Serial.println("3D0 message towards Jeep!!!!");
   }
   // Send off to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
