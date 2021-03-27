@@ -82,22 +82,28 @@ void manageMessagesFromJeep() {
 
   // Apply rules
   if (canId == BOSTON_CTRL_MSG_ID) {
+    Serial.println("BOSTON_CTRL_MSG")
     if (boston_ctrl_activated > 0) {
+      Serial.println("BOSTON_CONTROLLER_ACTIVE")
       // Boston controller is on
       switch (buf[0]) {
         case INCREASE_MSG:
           if (profile[index] < MAX_VALUES[index]) {
+            Serial.println("Increase");
             profile[index] += 1;
           }
           break;
         case DECREASE_MSG:
           if (profile[index] > 0) {
+            Serial.println("Decrease")
             profile[index] -= 1;
           }
           break;
         case COMMAND_MSG:
           if (index < 5) {
+           Serial.println("Increase Index");
            index += 1;
+           Serial.println(index);
           } else {
           index = 0;
           }
@@ -107,19 +113,26 @@ void manageMessagesFromJeep() {
         EEPROM.write(i, profile[i]);
       }
       CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true)
+      Serial.println("BOSTON_PROFILE_MSG sent")
     } else {
       // Boston controller is off
       if (buf[0] == COMMAND_MSG) {
         // This is a potential activation trigger
+        Serial.println("Trigger received")
         if (boston_ctrl_button_pressed > 0) {
+          Serial.println("Second trigger");
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
             // Second press - activate controller
+            Serial.println("Activated");
             boston_ctrl_activated = millis();
+            return;
           } else {
             // New press but too late to activate
             // Send buffered msg and clear timer
+            Serial.println("Too late - cancelling");
             boston_ctrl_button_pressed = 0;
             CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, [buffered_msg, 0], true);
+            buffered_msg = 0;
           }
         } else {
           boston_ctrl_button_pressed = millis();
