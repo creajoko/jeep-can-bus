@@ -6,7 +6,7 @@
 #include "jeep-can-bus-messages.h"
 
 #define MESSAGE_LEN 8
-#define CAN_DELAY_AFTER_SEND 20
+#define CAN_DELAY_AFTER_SEND 10
 
 const int SPI_CS_PIN_JEEP = 9;
 const int SPI_CS_PIN_RADIO = 10;
@@ -30,6 +30,8 @@ void setup() {
       Serial.println("CAN_RADIO init fail");
       delay(250);
   }
+  CAN_RADIO.setMode(MODE_NORMAL);
+  CAN_JEEP.setMode(MODE_NORMAL);
   Serial.println("CAN-bus proxy init ok");
 }
 
@@ -37,30 +39,38 @@ void manageMessagesFromJeep() {
   unsigned int canId;
   unsigned char len = 0;
   unsigned char buf[8];
-
+  
   if (CAN_MSGAVAIL != CAN_JEEP.checkReceive())
     return;
   memset(buf, 0, 8);
   CAN_JEEP.readMsgBuf(&len, buf);
   canId = CAN_JEEP.getCanId();
-  // Apply rules
+  // Apply rules  
   // Send off to radio
-  CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
+  Serial.println(CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true), HEX);
   delay(CAN_DELAY_AFTER_SEND);
 }
+
+  
 void manageMessagesFromRadio() {
   unsigned int canId;
   unsigned char len = 0;
-  unsigned char buf[8];
-
+  unsigned char buf[8];  
+  
   if (CAN_MSGAVAIL != CAN_RADIO.checkReceive())
     return;
   memset(buf, 0, 8);
   CAN_RADIO.readMsgBuf(&len, buf);
   canId = CAN_RADIO.getCanId();
-  // Apply rules
+  // Apply r ules
   if (canId == 0x3D0) {
-    Serial.println("3D0 message towards Jeep!!!!");
+    buf[0] = 30;
+    buf[1] = 12;
+    buf[2] = 15;
+    buf[3] = 13;
+    buf[4] = 13;
+    buf[5] = 11;
+    buf[6] = 0xFF;
   }
   // Send off to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
