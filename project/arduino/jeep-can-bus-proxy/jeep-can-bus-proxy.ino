@@ -135,18 +135,20 @@ void manageMessagesFromJeep() {
         Serial.print(", ");
       }
       CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+      delay(CAN_DELAY_AFTER_SEND);
       Serial.println("BOSTON_PROFILE_MSG sound sent");
       return;
     } else {
-      // Boston controller is off
+      // Boston controller is off, check if we shall activate
       if (buf[0] == COMMAND_MSG) {
-        // This is a potential activation trigger
-        Serial.println("Trigger received");
+        Serial.println("Trigger signal received");
         if (boston_ctrl_button_pressed > 0) {
+          // We are in trigger activation mode
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
             // Second press - activate controller
             unsigned char msg[8] = BOSTON_ASCII;
             CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 6, msg, true);
+            delay(CAN_DELAY_AFTER_SEND);
             Serial.println("Activated");
             boston_ctrl_activated = millis();
             return;
@@ -155,11 +157,14 @@ void manageMessagesFromJeep() {
             // Send buffered msg and clear timer
             Serial.println("Too late - cancelling");
             boston_ctrl_button_pressed = 0;
+            boston_ctrl_activated = 0;
             unsigned char buffered_msg_array[2] = {buffered_msg, 0};
             CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
+            delay(CAN_DELAY_AFTER_SEND);
             buffered_msg = 0;
           }
         } else {
+          // First press start trigger timer, store this msg, stop message
           boston_ctrl_button_pressed = millis();
           buffered_msg = buf[0];
           return;
@@ -178,6 +183,7 @@ void manageMessagesFromJeep() {
     boston_ctrl_button_pressed = 0;
     unsigned char buffered_msg_array[2] = {buffered_msg, 0};
     CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
+    delay(CAN_DELAY_AFTER_SEND);
     buffered_msg = 0;
   }
   // Send off to radio
@@ -204,6 +210,7 @@ void manageMessagesFromRadio() {
   }
   // Send off to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
+  delay(CAN_DELAY_AFTER_SEND);
 }
 
 void loop() {

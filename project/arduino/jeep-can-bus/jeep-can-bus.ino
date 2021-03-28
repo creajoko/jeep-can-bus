@@ -16,9 +16,9 @@ unsigned long filterStarted = 0;
 unsigned long lastDisplayRefresh = 0;
 
 // Operational control
-//#define SCANNER
-#define FILTERED_SCANNER
-//#define FILTER_PERIOD 3000 // Stop after ms
+#define SCANNER
+//#define FILTERED_SCANNER
+#define FILTER_PERIOD 3000 // Stop after ms
 
 // Filter scanner setting max 20
 int can_id_filter[] = {0x3D0, 0x394};
@@ -38,7 +38,7 @@ void setup() {
     Serial.println("CAN init fail");
     delay(250);
   }
-  Serial.println("CAN init ok");
+  Serial.println("CAN scanner init ok");
 }
 
 int display[20][20];
