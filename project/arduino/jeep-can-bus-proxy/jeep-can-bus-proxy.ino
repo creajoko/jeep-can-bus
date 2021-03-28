@@ -100,9 +100,8 @@ void manageMessagesFromJeep() {
     if (boston_ctrl_activated > 0) {
       Serial.println("BOSTON_CONTROLLER_ACTIVE");
       // Boston controller is on
-      Serial.print("Index: ");
+      Serial.print("Control index: ");
       Serial.println(index);
-      
       if(buf[0] == INCREASE_MSG) {
           unsigned char max = 19;
           if (index == 0) {
@@ -113,7 +112,7 @@ void manageMessagesFromJeep() {
             profile[index] += 1;
           }
           boston_ctrl_activated = millis();
-      } else if(buf[0] == DECREASE_MSG){
+      } else if(buf[0] == DECREASE_MSG) {
           if (profile[index] > 0) {
             Serial.println("Decrease");
             profile[index] -= 1;
@@ -129,6 +128,7 @@ void manageMessagesFromJeep() {
           Serial.println(index);
           boston_ctrl_activated = millis();
       }
+      // Store new profile
       for (unsigned int i=0; i<7; i++) {
         EEPROM.write(i, profile[i]);
         Serial.print(profile[i]);
@@ -136,7 +136,6 @@ void manageMessagesFromJeep() {
       }
       CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
       profile_sent = millis();
-      delay(CAN_DELAY_AFTER_SEND);
       Serial.println("BOSTON_PROFILE_MSG sound sent");
       return;
     } else {
@@ -146,12 +145,10 @@ void manageMessagesFromJeep() {
         if (boston_ctrl_button_pressed > 0) {
           // We are in trigger activation mode
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-            // Second press - activate controller
-            unsigned char msg[8] = BOSTON_ASCII;
-            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 6, msg, true);
-            delay(CAN_DELAY_AFTER_SEND);
+            // Second press - activate controller!
             Serial.println("Activated");
             boston_ctrl_activated = millis();
+            boston_ctrl_button_pressed = 0;
             return;
           } else {
             // New press but too late to activate
@@ -165,7 +162,7 @@ void manageMessagesFromJeep() {
             buffered_msg = 0;
           }
         } else {
-          // First press start trigger timer, store this msg, stop message
+          // First command btn press; start trigger timer, store this msg, stop message from propagating
           boston_ctrl_button_pressed = millis();
           buffered_msg = buf[0];
           return;
@@ -178,18 +175,18 @@ void manageMessagesFromJeep() {
   if (boston_ctrl_activated > 0 and millis() > boston_ctrl_activated + ACTIVE_PERIOD) {
     Serial.println("Controller cancelled by timeout");
     boston_ctrl_activated = 0;
+    boston_ctrl_button_pressed = 0;
   }
   if (boston_ctrl_button_pressed > 0 and millis() > boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-    Serial.println("Too late - cancelling");
+    Serial.println("Second trigger not in time, sending original msg and cancelling");
     boston_ctrl_button_pressed = 0;
     unsigned char buffered_msg_array[2] = {buffered_msg, 0};
     CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
-    delay(CAN_DELAY_AFTER_SEND);
+    delay(CAN_DELAY_AFTER_SEND)
     buffered_msg = 0;
   }
   // Send off to radio
   CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
-  delay(CAN_DELAY_AFTER_SEND);
 }
 
   
@@ -207,21 +204,13 @@ void manageMessagesFromRadio() {
   if (canId == 0x3D0) {
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
      profile_sent = millis();
-     delay(CAN_DELAY_AFTER_SEND);     
      return;
   }
-  // Send off to jeep
+  // Send off any message to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
-  delay(CAN_DELAY_AFTER_SEND);
 }
 
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
-  if(profile_sent + MAX_PROFILE_SEND_PERIOD < millis()) {
-      Serial.println("Sending profil");
-     CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-     profile_sent = millis();
-     delay(CAN_DELAY_AFTER_SEND); 
-  }
 }
