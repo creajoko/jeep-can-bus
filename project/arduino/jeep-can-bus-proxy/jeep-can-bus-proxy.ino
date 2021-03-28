@@ -13,7 +13,6 @@
 // Left steering wheel button used to control sound
 #define ACTIVATION_PERIOD 700
 #define ACTIVE_PERIOD 10000
-#define BOSTON_MIN_REFRESH_PERIOD 1000
 
 #define BOSTON_CTRL_MSG_ID 0x3A0
 #define COMMAND_MSG 1
@@ -31,6 +30,21 @@ unsigned char index = 0;
 unsigned long boston_ctrl_button_pressed = 0;
 unsigned long boston_ctrl_activated = 0;
 #define SOUND_PROFILE_MSG_ID 0x3D0
+
+// 394
+#define EVIC_MSG_ID 0x295
+#define BOSTON_ASCII = {0x42,0x6F,0x73,0x74,0x6F,0x6E}
+#define CONTROLLER_ASCII = {0x43,0x74,0x72,0x6C,0x65,0x72}
+#define ACTIVE_ASCII = {0x41,0x63,0x74,0x69,0x76,0x65}
+#define ON_ASCII = {0x4F,0x6E}
+#define OFF_ASCII = {0x4F,0x66,0x66}
+#define BALANCE_ASCII = {0x42,0x61,0x6C,0x61,0x6E,0x63,0x65}
+#define FADE_ASCII = {0x46,0x61,0x64,0x65}
+#define TREBLE_ASCII = {0x54,0x72,0x65,0x62,0x6C,0x65}
+#define MID_ASCII = {0x4D,0x69,0x64}
+#define BASS_ASCII = {0x42,0x61,0x73,0x73}
+
+#define INCREASE_ASCII = {}
 
 const int SPI_CS_PIN_JEEP = 9;
 const int SPI_CS_PIN_RADIO = 10;
@@ -128,6 +142,7 @@ void manageMessagesFromJeep() {
         if (boston_ctrl_button_pressed > 0) {
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
             // Second press - activate controller
+            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 6, {0x42,0x6F,0x73,0x74,0x6F,0x6E}, true);
             Serial.println("Activated");
             boston_ctrl_activated = millis();
             return;
