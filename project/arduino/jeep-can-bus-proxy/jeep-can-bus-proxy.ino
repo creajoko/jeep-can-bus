@@ -7,7 +7,7 @@
 #include "jeep-can-bus-messages.h"
 
 #define MESSAGE_LEN 8
-#define CAN_DELAY_AFTER_SEND 20
+#define CAN_DELAY_AFTER_SEND 10
 #define MAX_PROFILE_SEND_PERIOD 1000
 unsigned long profile_sent = 0;
 
@@ -135,6 +135,7 @@ void manageMessagesFromJeep() {
         Serial.print(", ");
       }
       CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+      profile_sent = millis();
       delay(CAN_DELAY_AFTER_SEND);
       Serial.println("BOSTON_PROFILE_MSG sound sent");
       return;
@@ -205,7 +206,8 @@ void manageMessagesFromRadio() {
   // Apply rules
   if (canId == 0x3D0) {
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-     delay(CAN_DELAY_AFTER_SEND);
+     profile_sent = millis();
+     delay(CAN_DELAY_AFTER_SEND);     
      return;
   }
   // Send off to jeep
@@ -216,4 +218,9 @@ void manageMessagesFromRadio() {
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
+  if(profile_sent < millis() - MAX_PROFILE_SEND_PERIOD) {
+     CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+     profile_sent = millis();
+     delay(CAN_DELAY_AFTER_SEND); 
+  }
 }
