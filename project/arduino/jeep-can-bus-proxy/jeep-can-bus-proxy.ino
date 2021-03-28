@@ -182,7 +182,7 @@ void manageMessagesFromJeep() {
     boston_ctrl_button_pressed = 0;
     unsigned char buffered_msg_array[2] = {buffered_msg, 0};
     CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
-    delay(CAN_DELAY_AFTER_SEND)
+    delay(CAN_DELAY_AFTER_SEND);
     buffered_msg = 0;
   }
   // Send off to radio
