@@ -94,105 +94,12 @@ void manageMessagesFromJeep() {
   memset(buf, 0, 8);
   CAN_JEEP.readMsgBuf(&len, buf);
   canId = CAN_JEEP.getCanId();
-
   // Apply rules
-  if (canId == BOSTON_CTRL_MSG_ID and buf[0] != 0) {
-    if (boston_ctrl_activated > 0) {
-      Serial.println("BOSTON_CONTROLLER_ACTIVE");
-      // Boston controller is on
-      Serial.print("Index: ");
-      Serial.println(index);
-      
-      if(buf[0] == INCREASE_MSG) {
-          unsigned char max = 19;
-          if (index == 0) {
-            max = 39;
-          }
-          if (profile[index] < max) {
-            Serial.println("Increase");
-            profile[index] += 1;
-          }
-          boston_ctrl_activated = millis();
-      } else if(buf[0] == DECREASE_MSG){
-          if (profile[index] > 0) {
-            Serial.println("Decrease");
-            profile[index] -= 1;
-          }
-          boston_ctrl_activated = millis();
-      } else if(buf[0] == COMMAND_MSG) {
-          if (index < 5) {
-            Serial.println("Increase Index");
-            index += 1;           
-          } else {
-            index = 0;
-          }
-          Serial.println(index);
-          boston_ctrl_activated = millis();
-      }
-      for (unsigned int i=0; i<7; i++) {
-        EEPROM.write(i, profile[i]);
-        Serial.print(profile[i]);
-        Serial.print(", ");
-      }
-      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-      profile_sent = millis();
-      delay(CAN_DELAY_AFTER_SEND);
-      Serial.println("BOSTON_PROFILE_MSG sound sent");
-      return;
-    } else {
-      // Boston controller is off, check if we shall activate
-      if (buf[0] == COMMAND_MSG) {
-        Serial.println("Trigger signal received");
-        if (boston_ctrl_button_pressed > 0) {
-          // We are in trigger activation mode
-          if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-            // Second press - activate controller
-            unsigned char msg[8] = BOSTON_ASCII;
-            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 6, msg, true);
-            delay(CAN_DELAY_AFTER_SEND);
-            Serial.println("Activated");
-            boston_ctrl_activated = millis();
-            return;
-          } else {
-            // New press but too late to activate
-            // Send buffered msg and clear timer
-            Serial.println("Too late - cancelling");
-            boston_ctrl_button_pressed = 0;
-            boston_ctrl_activated = 0;
-            unsigned char buffered_msg_array[2] = {buffered_msg, 0};
-            CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
-            delay(CAN_DELAY_AFTER_SEND);
-            buffered_msg = 0;
-          }
-        } else {
-          // First press start trigger timer, store this msg, stop message
-          boston_ctrl_button_pressed = millis();
-          buffered_msg = buf[0];
-          return;
-        }
-      }
-    } 
-  } else {
-    // Any other message - do not care
-  }
-  if (boston_ctrl_activated > 0 and millis() > boston_ctrl_activated + ACTIVE_PERIOD) {
-    Serial.println("Controller cancelled by timeout");
-    boston_ctrl_activated = 0;
-  }
-  if (boston_ctrl_button_pressed > 0 and millis() > boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-    Serial.println("Too late - cancelling");
-    boston_ctrl_button_pressed = 0;
-    unsigned char buffered_msg_array[2] = {buffered_msg, 0};
-    CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
-    delay(CAN_DELAY_AFTER_SEND);
-    buffered_msg = 0;
-  }
   // Send off to radio
   CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
   delay(CAN_DELAY_AFTER_SEND);
 }
 
-  
 void manageMessagesFromRadio() {
   unsigned int canId;
   unsigned char len = 0;
@@ -206,8 +113,7 @@ void manageMessagesFromRadio() {
   // Apply rules
   if (canId == 0x3D0) {
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-     profile_sent = millis();
-     delay(CAN_DELAY_AFTER_SEND);     
+     delay(CAN_DELAY_AFTER_SEND);
      return;
   }
   // Send off to jeep
