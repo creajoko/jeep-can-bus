@@ -12,7 +12,7 @@
 unsigned long profile_sent = 0;
 
 // Boston controller
-// Left steering wheel button used to control sound
+// Left steering wheel button used to control sound!
 #define ACTIVATION_PERIOD 500
 #define ACTIVE_PERIOD 10000
 
@@ -88,7 +88,7 @@ void manageMessagesFromJeep() {
   unsigned char len = 0;
   unsigned char buf[8];
   unsigned char buffered_msg = 0;
-  
+
   if (CAN_MSGAVAIL != CAN_JEEP.checkReceive())
     return;
   memset(buf, 0, 8);
@@ -125,7 +125,7 @@ void manageMessagesFromJeep() {
       } else if(buf[0] == COMMAND_MSG) {
           if (index < 5) {
             Serial.println("Increase Index");
-            index += 1;           
+            index += 1;
           } else {
             index = 0;
           }
@@ -172,7 +172,7 @@ void manageMessagesFromJeep() {
           return;
         }
       }
-    } 
+    }
   } else {
     // Any other message - do not care
   }
@@ -193,12 +193,12 @@ void manageMessagesFromJeep() {
   CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
 
-  
+
 void manageMessagesFromRadio() {
   unsigned int canId;
   unsigned char len = 0;
-  unsigned char buf[8];  
-  
+  unsigned char buf[8];
+
   if (CAN_MSGAVAIL != CAN_RADIO.checkReceive())
     return;
   memset(buf, 0, 8);
