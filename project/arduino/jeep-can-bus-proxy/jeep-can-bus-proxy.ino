@@ -8,12 +8,12 @@
 
 #define MESSAGE_LEN 8
 #define CAN_DELAY_AFTER_SEND 10
-#define MAX_PROFILE_SEND_PERIOD 1000
+#define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
 
 // Boston controller
 // Left steering wheel button used to control sound
-#define ACTIVATION_PERIOD 700
+#define ACTIVATION_PERIOD 500
 #define ACTIVE_PERIOD 10000
 
 #define BOSTON_CTRL_MSG_ID 0x3A0
@@ -218,7 +218,8 @@ void manageMessagesFromRadio() {
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
-  if(profile_sent < millis() - MAX_PROFILE_SEND_PERIOD) {
+  if(profile_sent + MAX_PROFILE_SEND_PERIOD < millis()) {
+      Serial.println("Sending profil");
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
      profile_sent = millis();
      delay(CAN_DELAY_AFTER_SEND); 
