@@ -8,6 +8,8 @@
 
 #define MESSAGE_LEN 8
 #define CAN_DELAY_AFTER_SEND 10
+#define MAX_PROFILE_SEND_PERIOD 1000
+unsigned long profile_sent = 0;
 
 // Boston controller
 // Left steering wheel button used to control sound
@@ -24,6 +26,7 @@
 #define mid 3
 #define treble 4
 #define unknown 5
+
 unsigned char profile[7] = {20, 10, 10, 10, 10, 10, 0xFF};
 
 unsigned char index = 0;
@@ -32,8 +35,8 @@ unsigned long boston_ctrl_activated = 0;
 #define SOUND_PROFILE_MSG_ID 0x3D0
 
 // 394
-#define EVIC_MSG_ID 0x295
-#define BOSTON_ASCII = {0x42,0x6F,0x73,0x74,0x6F,0x6E}
+#define EVIC_MSG_ID 0x394
+#define BOSTON_ASCII {0x42,0x6F,0x73,0x74,0x6F,0x6E}
 #define CONTROLLER_ASCII = {0x43,0x74,0x72,0x6C,0x65,0x72}
 #define ACTIVE_ASCII = {0x41,0x63,0x74,0x69,0x76,0x65}
 #define ON_ASCII = {0x4F,0x6E}
@@ -142,7 +145,8 @@ void manageMessagesFromJeep() {
         if (boston_ctrl_button_pressed > 0) {
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
             // Second press - activate controller
-            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 6, {0x42,0x6F,0x73,0x74,0x6F,0x6E}, true);
+            unsigned char msg[8] = BOSTON_ASCII;
+            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 6, msg, true);
             Serial.println("Activated");
             boston_ctrl_activated = millis();
             return;
@@ -205,4 +209,9 @@ void manageMessagesFromRadio() {
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
+  if (profile_sent < millis() + MAX_PROFILE_SEND_PERIOD) {
+    CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+    profile_sent = millis();
+  }
+  
 }
