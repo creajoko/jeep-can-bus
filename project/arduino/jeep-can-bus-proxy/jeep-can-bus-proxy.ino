@@ -11,6 +11,17 @@
 #define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
 
+#define LED_PERIOD 6000
+#define LED_ON_TIME 400
+#define LED_OFF_TIME 400
+#define LED_FLASH_TIME 100
+unsigned long led_sequence_start = 0;
+unsigned long led_last_event = 0;
+unsigned long led_last_flash_event = 0;
+unsigned long led_flash_on = 0;
+unsigned char led_flash_state = 0;
+unsigned char led_state = 0;
+
 // Boston controller
 // Left steering wheel button used to control sound!
 #define ACTIVATION_PERIOD 500
@@ -33,23 +44,6 @@ unsigned char index = 0;
 unsigned long boston_ctrl_button_pressed = 0;
 unsigned long boston_ctrl_activated = 0;
 #define SOUND_PROFILE_MSG_ID 0x3D0
-
-// 394
-#define EVIC_MSG_ID 0x295
-/*
-#define BOSTON_ASCII {0x42,0x6F,0x73,0x74,0x6F,0x6E,0}
-#define CONTROLLER_ASCII {0x43,0x74,0x72,0x6C,0x65,0x72,0}
-#define ACTIVE_ASCII {0x41,0x63,0x74,0x69,0x76,0x65,0}
-#define ON_ASCII {0x4F,0x6E,0}
-#define OFF_ASCII {0x4F,0x66,0x66,0}
-#define BALANCE_ASCII {0x42,0x61,0x6C,0x61,0x6E,0x63,0x65,0}
-#define FADE_ASCII {0x46,0x61,0x64,0x65,0}
-#define TREBLE_ASCII {0x54,0x72,0x65,0x62,0x6C,0x65,0}
-#define MID_ASCII {0x4D,0x69,0x64,0}
-#define BASS_ASCII {0x42,0x61,0x73,0x73,0}
-#define UP_ASCII {0x55,0x70,0}
-#define DOWN_ASCII {0x44,0x6f,0x77,0x6e,0}
-*/
 
 const int SPI_CS_PIN_JEEP = 9;
 const int SPI_CS_PIN_RADIO = 10;
@@ -75,6 +69,8 @@ void setup() {
   }
   CAN_RADIO.setMode(MODE_NORMAL);
   CAN_JEEP.setMode(MODE_NORMAL);
+  pinMode(7, OUTPUT);
+
   Serial.println("CAN-bus proxy and Boston controller init ok");
 
   if(EEPROM.read(0) != 255) {
@@ -113,8 +109,6 @@ void manageMessagesFromJeep() {
             Serial.println("Up");
             profile[index] += 1;
             unsigned char temp_buf[3] = {0x55,0x70,0};
-            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 3, temp_buf, true);
-            delay(CAN_DELAY_AFTER_SEND);
           }
           boston_ctrl_activated = millis();
       } else if(buf[0] == DECREASE_MSG) {
@@ -122,8 +116,6 @@ void manageMessagesFromJeep() {
             Serial.println("Down");
             profile[index] -= 1;
             unsigned char temp_buf[5] = {0x44,0x6f,0x77,0x6e,0};
-            CAN_JEEP.sendMsgBuf(EVIC_MSG_ID, 0, 0, 5, temp_buf, true);
-            delay(CAN_DELAY_AFTER_SEND);
           }
           boston_ctrl_activated = millis();
       } else if(buf[0] == COMMAND_MSG) {
@@ -153,10 +145,11 @@ void manageMessagesFromJeep() {
         if (boston_ctrl_button_pressed > 0) {
           // We are in trigger activation mode
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-            // Second press - activate controller!
+            // Second press - activate controller, start at volume!
             Serial.println("Activated");
             boston_ctrl_activated = millis();
             boston_ctrl_button_pressed = 0;
+            index = 0;
             return;
           } else {
             // New press but too late to activate
@@ -196,8 +189,6 @@ void manageMessagesFromJeep() {
   // Send off to radio
   CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
-
-
 void manageMessagesFromRadio() {
   unsigned int canId;
   unsigned char len = 0;
@@ -218,7 +209,48 @@ void manageMessagesFromRadio() {
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
 
+unsigned char led_flash_counter = 0;
+
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
+
+  if(boston_ctrl_activated > 0) {
+    // LED Signal controller arctive
+    if(led_sequence_start == 0) {
+      // Start
+      led_sequence_start = millis();
+      led_last_evvent = 0;
+      led_flash_counter = 0;
+      led_state = 0;
+    }
+    if(led_flash_counter <= index){
+      if(led_state == 0 and millis() > led_last_event + LED_OFF_TIME) {
+        led_last_event = millis();
+        led_state = 1;
+        digitalWrite(7, HIGH);
+      }
+      if(led_state == 1 and millis() > led_last_event + LED_ON_TIME) {
+        led_last_event = millis();
+        led_state = 0;
+        digitalWrite(7, LOW);
+        led_flash_counter += 1;
+      }
+    } else {
+        if(millis() > led_sequence_start + LED_PERIOD) {
+          led_sequence_start = 0;
+      }
+    }
+  } else (millis() > led_last_flash_event + LED_PERIOD) {
+    if(led_flash_state == 0) {
+          led_flash_state = 1;
+          led_flash_on = millis();
+          digitalWrite(7, HIGH);
+    }
+    if(led_flash_state == 1 and millis() > led_last_flash_event + LED_ON_TIME) {
+      led_flash_state = 0;
+      digitalWrite(7, LOW);
+      led_last_flash_event = millis();
+    }
+  }
 }
