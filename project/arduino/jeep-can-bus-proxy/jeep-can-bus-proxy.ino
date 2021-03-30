@@ -11,7 +11,6 @@
 #define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
 
-
 unsigned char profile[7] = {20, 10, 10, 10, 10, 10, 0xFF};
 
 #define SOUND_PROFILE_MSG_ID 0x3D0
@@ -24,6 +23,8 @@ mcp2515_can CAN_RADIO(SPI_CS_PIN_RADIO);
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
+unsigned char radio_bus_state = 0;
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Jeep CAN-bus proxy");
@@ -34,6 +35,7 @@ void setup() {
     Serial.println("CAN_JEEP init fail");
     delay(250);
   }
+  
   while (CAN_OK != CAN_RADIO.begin(CAN_83K3BPS, MCP_16MHz)) {
       Serial.println("CAN_RADIO init fail");
       delay(250);
@@ -63,7 +65,9 @@ void manageMessagesFromJeep() {
   canId = CAN_JEEP.getCanId();
   // Apply rules
   // Send off to radio
-  CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
+  if (radio_bus_state == 1) {
+    CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
+  }
 }
 
 void manageMessagesFromRadio() {
@@ -83,14 +87,10 @@ void manageMessagesFromRadio() {
   }
   // Send off to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
+  radio_bus_state = 1;
 }
 
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
-  if(profile_sent + MAX_PROFILE_SEND_PERIOD < millis()) {
-      Serial.println("Sending profile");
-     CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-     profile_sent = millis();
-  }
 }
