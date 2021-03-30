@@ -161,9 +161,10 @@ void manageMessagesFromJeep() {
             boston_ctrl_button_pressed = 0;
             boston_ctrl_activated = 0;
             unsigned char buffered_msg_array[2] = {buffered_msg, 0};
-            CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
-            delay(CAN_DELAY_AFTER_SEND);
-            buffered_msg = 0;
+            if(radio_status ==1) {
+              CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
+              delay(CAN_DELAY_AFTER_SEND);
+              buffered_msg = 0;}
           }
         } else {
           // First command btn press; start trigger timer, store this msg, stop message from propagating
@@ -185,9 +186,12 @@ void manageMessagesFromJeep() {
     Serial.println("Second trigger not in time, sending original msg and cancelling");
     boston_ctrl_button_pressed = 0;
     unsigned char buffered_msg_array[2] = {buffered_msg, 0};
-    CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
-    delay(CAN_DELAY_AFTER_SEND);
-    buffered_msg = 0;
+
+    if(radio_status == 1) {
+      CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
+      delay(CAN_DELAY_AFTER_SEND);
+      buffered_msg = 0;
+    }
   }
   // Send off to radio if radio is active
   if (radio_status == 1) {}
@@ -247,7 +251,7 @@ void loop() {
           led_sequence_start = 0;
         }
     }
-  } 
+  }
   if (millis() > led_last_flash_event + LED_PERIOD) {
     if(led_flash_state == 0) {
           led_flash_state = 1;
