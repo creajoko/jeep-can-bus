@@ -11,6 +11,7 @@
 #define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
 
+// Manage LED
 #define LED_PERIOD 6000
 #define LED_ON_TIME 400
 #define LED_OFF_TIME 400
@@ -23,7 +24,7 @@ unsigned char led_flash_state = 0;
 unsigned char led_state = 0;
 
 // Boston controller
-// Left steering wheel button used to control sound!
+// Right steering wheel backside button used to control sound!
 #define ACTIVATION_PERIOD 500
 #define ACTIVE_PERIOD 10000
 
@@ -37,16 +38,16 @@ unsigned char led_state = 0;
 #define mid 3
 #define treble 4
 #define unknown 5
-
 unsigned char profile[7] = {20, 10, 10, 10, 10, 10, 0xFF};
-
 unsigned char index = 0;
 unsigned long boston_ctrl_button_pressed = 0;
 unsigned long boston_ctrl_activated = 0;
+
 #define SOUND_PROFILE_MSG_ID 0x3D0
 
 const int SPI_CS_PIN_JEEP = 9;
 const int SPI_CS_PIN_RADIO = 10;
+unsigned char radio_status = 0;
 
 mcp2515_can CAN_JEEP(SPI_CS_PIN_JEEP);
 mcp2515_can CAN_RADIO(SPI_CS_PIN_RADIO);
@@ -69,6 +70,8 @@ void setup() {
   }
   CAN_RADIO.setMode(MODE_NORMAL);
   CAN_JEEP.setMode(MODE_NORMAL);
+
+  // LED signal
   pinMode(7, OUTPUT);
 
   Serial.println("CAN-bus proxy and Boston controller init ok");
@@ -186,8 +189,10 @@ void manageMessagesFromJeep() {
     delay(CAN_DELAY_AFTER_SEND);
     buffered_msg = 0;
   }
-  // Send off to radio
-  CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
+  // Send off to radio if radio is active
+  if (radio_status == 1) {}
+    CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
+}
 }
 void manageMessagesFromRadio() {
   unsigned int canId;
@@ -205,6 +210,7 @@ void manageMessagesFromRadio() {
      profile_sent = millis();
      return;
   }
+  radio_status = 1;
   // Send off any message to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
