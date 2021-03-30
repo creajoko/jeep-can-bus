@@ -15,7 +15,7 @@ unsigned long profile_sent = 0;
 #define LED_PERIOD 6000
 #define LED_ON_TIME 400
 #define LED_OFF_TIME 400
-#define LED_FLASH_TIME 100
+#define LED_FLASH_TIME 800
 unsigned long led_sequence_start = 0;
 unsigned long led_last_event = 0;
 unsigned long led_last_flash_event = 0;
@@ -226,7 +226,7 @@ void loop() {
     if(led_sequence_start == 0) {
       // Start
       led_sequence_start = millis();
-      led_last_evvent = 0;
+      led_last_event = 0;
       led_flash_counter = 0;
       led_state = 0;
     }
@@ -245,15 +245,16 @@ void loop() {
     } else {
         if(millis() > led_sequence_start + LED_PERIOD) {
           led_sequence_start = 0;
-      }
+        }
     }
-  } else (millis() > led_last_flash_event + LED_PERIOD) {
+  } 
+  if (millis() > led_last_flash_event + LED_PERIOD) {
     if(led_flash_state == 0) {
           led_flash_state = 1;
           led_flash_on = millis();
           digitalWrite(7, HIGH);
     }
-    if(led_flash_state == 1 and millis() > led_last_flash_event + LED_ON_TIME) {
+    if(led_flash_state == 1 and millis() > led_flash_on + LED_FLASH_TIME) {
       led_flash_state = 0;
       digitalWrite(7, LOW);
       led_last_flash_event = millis();
