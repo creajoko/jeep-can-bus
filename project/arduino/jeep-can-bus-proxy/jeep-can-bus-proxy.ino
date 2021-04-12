@@ -12,10 +12,10 @@
 unsigned long profile_sent = 0;
 
 // Manage LED
-#define LED_PERIOD 6000
-#define LED_ON_TIME 400
-#define LED_OFF_TIME 400
-#define LED_FLASH_TIME 800
+#define LED_PERIOD 10000
+#define LED_ON_TIME 500
+#define LED_OFF_TIME 500
+#define LED_FLASH_TIME 1000
 unsigned long led_sequence_start = 0;
 unsigned long led_last_event = 0;
 unsigned long led_last_flash_event = 0;
@@ -47,7 +47,6 @@ unsigned long boston_ctrl_activated = 0;
 
 const int SPI_CS_PIN_JEEP = 9;
 const int SPI_CS_PIN_RADIO = 10;
-unsigned char radio_status = 0;
 
 mcp2515_can CAN_JEEP(SPI_CS_PIN_JEEP);
 mcp2515_can CAN_RADIO(SPI_CS_PIN_RADIO);
@@ -76,7 +75,8 @@ void setup() {
 
   Serial.println("CAN-bus proxy and Boston controller init ok");
 
-  if(EEPROM.read(0) != 255) {
+  // disable persistance for now!
+  if(false and EEPROM.read(0) != 255) {
     for(unsigned char i=0;i<7;i++) {
       profile[i] = EEPROM.read(i);
       Serial.print(profile[i]);
@@ -101,12 +101,12 @@ void manageMessagesFromJeep() {
     if (boston_ctrl_activated > 0) {
       Serial.println("BOSTON_CONTROLLER_ACTIVE");
       // Boston controller is on
-      Serial.print("Control index: ");
+      Serial.print("Controler index: ");
       Serial.println(index);
       if(buf[0] == INCREASE_MSG) {
           unsigned char max = 19;
           if (index == 0) {
-            max = 39;
+            max = 25; // Limit below max 39!
           }
           if (profile[index] < max) {
             Serial.println("Up");
@@ -123,7 +123,7 @@ void manageMessagesFromJeep() {
           boston_ctrl_activated = millis();
       } else if(buf[0] == COMMAND_MSG) {
           if (index < 5) {
-            Serial.println("Increase Index");
+            Serial.print("Change index to ");
             index += 1;
           } else {
             index = 0;
@@ -132,77 +132,56 @@ void manageMessagesFromJeep() {
           boston_ctrl_activated = millis();
       }
       // Store new profile
+      Serial.print("Store new profile: ");
       for (unsigned int i=0; i<7; i++) {
-        EEPROM.write(i, profile[i]);
+        // EEPROM.write(i, profile[i]);
         Serial.print(profile[i]);
         Serial.print(", ");
       }
+      Serial.println("Send profile to jeep");
       CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
       profile_sent = millis();
-      Serial.println("BOSTON_PROFILE_MSG sound sent");
       return;
     } else {
       // Boston controller is off, check if we shall activate
       if (buf[0] == COMMAND_MSG) {
-        Serial.println("Trigger signal received");
+        Serial.println("Activation command received");
         if (boston_ctrl_button_pressed > 0) {
           // We are in trigger activation mode
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-            // Second press - activate controller, start at volume!
-            Serial.println("Activated");
+            // Second press - activate controller, start index at volume!
+            Serial.println("Second command in time: Activate!");
             boston_ctrl_activated = millis();
             boston_ctrl_button_pressed = 0;
             index = 0;
             return;
           } else {
-            // New press but too late to activate
-            // Send buffered msg and clear timer
-            Serial.println("Too late - cancelling");
+            // New press but too late to activate Flush bufferand clear timer
+            Serial.println("Second command too late - cancel");
             boston_ctrl_button_pressed = 0;
             boston_ctrl_activated = 0;
             unsigned char buffered_msg_array[2] = {buffered_msg, 0};
-            if(radio_status ==1) {
-              CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
-              delay(CAN_DELAY_AFTER_SEND);
-              buffered_msg = 0;}
+            buffered_msg = 0;
+            CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
+            delay(CAN_DELAY_AFTER_SEND);
           }
         } else {
           // First command btn press; start trigger timer, store this msg, stop message from propagating
+          Serial.println("First command, waiting for second")
           boston_ctrl_button_pressed = millis();
           buffered_msg = buf[0];
           return;
         }
       }
     }
-  } else {
-    // Any other message - do not care
   }
-  if (boston_ctrl_activated > 0 and millis() > boston_ctrl_activated + ACTIVE_PERIOD) {
-    Serial.println("Controller cancelled by timeout");
-    boston_ctrl_activated = 0;
-    boston_ctrl_button_pressed = 0;
-  }
-  if (boston_ctrl_button_pressed > 0 and millis() > boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
-    Serial.println("Second trigger not in time, sending original msg and cancelling");
-    boston_ctrl_button_pressed = 0;
-    unsigned char buffered_msg_array[2] = {buffered_msg, 0};
-
-    if(radio_status == 1) {
-      CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array, true);
-      delay(CAN_DELAY_AFTER_SEND);
-      buffered_msg = 0;
-    }
-  }
-  // Send off to radio if radio is active
-  if (radio_status == 1) {}
-    CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
-}
+  // Send off to radi
+  CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
 void manageMessagesFromRadio() {
   unsigned int canId;
   unsigned char len = 0;
   unsigned char buf[8];
-
   if (CAN_MSGAVAIL != CAN_RADIO.checkReceive())
     return;
   memset(buf, 0, 8);
@@ -210,12 +189,12 @@ void manageMessagesFromRadio() {
   canId = CAN_RADIO.getCanId();
   // Apply rules
   if (canId == 0x3D0) {
+     // Replace radios profile with my profile
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
      profile_sent = millis();
      return;
   }
-  radio_status = 1;
-  // Send off any message to jeep
+  // Send off any other message to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
 
@@ -225,8 +204,14 @@ void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
 
+  if (boston_ctrl_activated > 0 and millis() > boston_ctrl_activated + ACTIVE_PERIOD) {
+    Serial.println("Controller cancelled by timeout");
+    boston_ctrl_activated = 0;
+    boston_ctrl_button_pressed = 0;
+  }
+
+  // LED signalling controller state (index)
   if(boston_ctrl_activated > 0) {
-    // LED Signal controller arctive
     if(led_sequence_start == 0) {
       // Start
       led_sequence_start = millis();
@@ -251,7 +236,10 @@ void loop() {
           led_sequence_start = 0;
         }
     }
+    return;
   }
+
+  // Periodic LED flash, if not in controller mode
   if (millis() > led_last_flash_event + LED_PERIOD) {
     if(led_flash_state == 0) {
           led_flash_state = 1;
