@@ -10,6 +10,7 @@
 #define CAN_DELAY_AFTER_SEND 10
 #define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
+#define SIMULATION_MESSAGES_PERIOD 500
 
 // Manage LED
 #define LED_PERIOD 10000
@@ -100,8 +101,8 @@ void manageMessagesFromJeep() {
   if (canId == BOSTON_CTRL_MSG_ID and buf[0] != 0) {
     if (boston_ctrl_activated > 0) {
       Serial.println("BOSTON_CONTROLLER_ACTIVE");
-      // Boston controller is on
-      Serial.print("Controler index: ");
+      // Boston controller is active
+      Serial.print("Control index: ");
       Serial.println(index);
       if(buf[0] == INCREASE_MSG) {
           unsigned char max = 19;
@@ -150,14 +151,14 @@ void manageMessagesFromJeep() {
           // We are in trigger activation mode
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
             // Second press - activate controller, start index at volume!
-            Serial.println("Second command in time: Activate!");
+            Serial.println("Activating controller");
             boston_ctrl_activated = millis();
             boston_ctrl_button_pressed = 0;
             index = 0;
             return;
           } else {
-            // New press but too late to activate Flush bufferand clear timer
-            Serial.println("Second command too late - cancel");
+            // New press but too late to activate, Flush bufferand, clear timer
+            Serial.println("Activation process cancelled");
             boston_ctrl_button_pressed = 0;
             boston_ctrl_activated = 0;
             unsigned char buffered_msg_array[2] = {buffered_msg, 0};
@@ -167,7 +168,7 @@ void manageMessagesFromJeep() {
           }
         } else {
           // First command btn press; start trigger timer, store this msg, stop message from propagating
-          Serial.println("First command, waiting for second")
+          Serial.println("Activation process started")
           boston_ctrl_button_pressed = millis();
           buffered_msg = buf[0];
           return;
@@ -175,7 +176,7 @@ void manageMessagesFromJeep() {
       }
     }
   }
-  // Send off to radi
+  // Send off to radio
   CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
 void manageMessagesFromRadio() {
@@ -188,7 +189,7 @@ void manageMessagesFromRadio() {
   CAN_RADIO.readMsgBuf(&len, buf);
   canId = CAN_RADIO.getCanId();
   // Apply rules
-  if (canId == 0x3D0) {
+  if (canId == SOUND_PROFILE_MSG_ID) {
      // Replace radios profile with my profile
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
      profile_sent = millis();
@@ -198,8 +199,17 @@ void manageMessagesFromRadio() {
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
 }
 
-unsigned char led_flash_counter = 0;
+unsigned long simulation_time = 0
+void simulateRunningJeep() {
+  if (millis() > simulation_time + SIMULATION_MESSAGES_PERIOD) {
+    CAN_RADIO.sendMsgBuf(0x000, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00); delay(CAN_DELAY_AFTER_SEND);
+    CAN_RADIO.sendMsgBuf(0x015, 85, 121, 6, 255, 0x00, 0x00); delay(CAN_DELAY_AFTER_SEND);
+    CAN_RADIO.sendMsgBuf(0x1AF, 3, 131, 0, 192, 16, 44, 8, 0); delay(CAN_DELAY_AFTER_SEND);
+    simulation_time = millis();
+  }
+}
 
+unsigned char led_flash_counter = 0;
 void loop() {
   manageMessagesFromJeep();
   manageMessagesFromRadio();
@@ -210,7 +220,7 @@ void loop() {
     boston_ctrl_button_pressed = 0;
   }
 
-  // LED signalling controller state (index)
+  // LED signal controller state (index)
   if(boston_ctrl_activated > 0) {
     if(led_sequence_start == 0) {
       // Start
@@ -239,7 +249,7 @@ void loop() {
     return;
   }
 
-  // Periodic LED flash, if not in controller mode
+  // Periodic slow LED flash, not in controller mode
   if (millis() > led_last_flash_event + LED_PERIOD) {
     if(led_flash_state == 0) {
           led_flash_state = 1;
@@ -252,4 +262,6 @@ void loop() {
       led_last_flash_event = millis();
     }
   }
+  // Enable benched radio to start
+  simulateRunningJeep();
 }
