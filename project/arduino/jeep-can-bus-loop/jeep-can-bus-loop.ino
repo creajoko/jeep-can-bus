@@ -23,11 +23,9 @@ mcp2515_can CAN_RADIO(SPI_CS_PIN_RADIO);
 
 const char compileDate[] = __DATE__ " " __TIME__;
 
-unsigned char radio_bus_state = 0;
-
 void setup() {
   Serial.begin(115200);
-  Serial.println("Jeep CAN-bus proxy");
+  Serial.println("Jeep CAN-bus loop");
   Serial.println(compileDate);
   Serial.begin(115200);
 
@@ -50,9 +48,10 @@ void setup() {
       Serial.print(profile[i]);
     }
   }
+  pinMode(7, OUTPUT);
 }
 
-void manageMessagesFromJeep() {
+void manageMessagesFromJeepCard() {
   unsigned int canId;
   unsigned char len = 0;
   unsigned char buf[8];
@@ -64,13 +63,13 @@ void manageMessagesFromJeep() {
   CAN_JEEP.readMsgBuf(&len, buf);
   canId = CAN_JEEP.getCanId();
   // Apply rules
+  Serial.print("Jeep card recieved message ");
+  Serial.println(canId, HEX);
   // Send off to radio
-  if (radio_bus_state == 1) {
-    CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
-  }
+  //CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, false);
 }
 
-void manageMessagesFromRadio() {
+void manageMessagesFromRadioCard() {
   unsigned int canId;
   unsigned char len = 0;
   unsigned char buf[8];  
@@ -80,17 +79,39 @@ void manageMessagesFromRadio() {
   memset(buf, 0, 8);
   CAN_RADIO.readMsgBuf(&len, buf);
   canId = CAN_RADIO.getCanId();
+  Serial.print("Radio card recieved message ");
+  Serial.println(canId, HEX);
   // Apply rules
-  if (canId == 0x3D0) {
-     CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-     return;
-  }
+  //if (canId == 0x3D0) {
+    //Serial.println("Send to Jeep, replace with correct profile");
+    //CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+     //return;
+  //}
   // Send off to jeep
-  CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
-  radio_bus_state = 1;
+  //Serial.print(canId);
+  //Serial.println(" - Send to Jeep (but cycle stopped now)");
+  //CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, false);
 }
+unsigned long action = millis();
+bool led = false;
 
 void loop() {
-  manageMessagesFromJeep();
-  manageMessagesFromRadio();
+  manageMessagesFromJeepCard();
+  manageMessagesFromRadioCard();
+  if (millis() > action + 100) {
+    action = millis();
+    if (led) {
+      digitalWrite(7, LOW);
+      led = not led;
+      CAN_RADIO.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+      Serial.print("Inject message from radio card to Jeep card ");
+      Serial.println(SOUND_PROFILE_MSG_ID, HEX);
+    } else {
+      digitalWrite(7, HIGH);
+      led = not led;
+      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
+      Serial.print("Inject message from Jeep card to radio card ");
+      Serial.println(SOUND_PROFILE_MSG_ID, HEX);
+    }
+  }
 }
