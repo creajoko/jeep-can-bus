@@ -1,0 +1,4 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "project\\arduino\\jeep-can-bus-proxy\\jeep-can-bus-proxy.ino"
+}

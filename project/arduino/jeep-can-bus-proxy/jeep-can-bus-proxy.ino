@@ -10,7 +10,7 @@
 #define CAN_DELAY_AFTER_SEND 10
 #define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
-#define SIMULATION_MESSAGES_PERIOD 500
+#define SIMULATION_MESSAGES_PERIOD 800
 
 // Manage LED
 #define LED_PERIOD 10000
@@ -168,7 +168,7 @@ void manageMessagesFromJeep() {
           }
         } else {
           // First command btn press; start trigger timer, store this msg, stop message from propagating
-          Serial.println("Activation process started")
+          Serial.println("Activation process started");
           boston_ctrl_button_pressed = millis();
           buffered_msg = buf[0];
           return;
@@ -178,6 +178,7 @@ void manageMessagesFromJeep() {
   }
   // Send off to radio
   CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
+  Serial.println(canId);
 }
 void manageMessagesFromRadio() {
   unsigned int canId;
@@ -189,6 +190,7 @@ void manageMessagesFromRadio() {
   CAN_RADIO.readMsgBuf(&len, buf);
   canId = CAN_RADIO.getCanId();
   // Apply rules
+  Serial.print("From radio ");Serial.println(canId);
   if (canId == SOUND_PROFILE_MSG_ID) {
      // Replace radios profile with my profile
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
@@ -197,23 +199,32 @@ void manageMessagesFromRadio() {
   }
   // Send off any other message to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
+  
 }
 
-unsigned long simulation_time = 0
+unsigned long simulation_time = 0;
+unsigned char prof1[6] = {85, 121, 6, 255, 0x00, 0x00};
+unsigned char prof2[8] = {3, 131, 0, 192, 16, 44, 8, 0};
+unsigned char prof0[6] = {0x81, 0, 0, 0, 0, 0};
+
 void simulateRunningJeep() {
   if (millis() > simulation_time + SIMULATION_MESSAGES_PERIOD) {
-    CAN_RADIO.sendMsgBuf(0x000, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00); delay(CAN_DELAY_AFTER_SEND);
-    CAN_RADIO.sendMsgBuf(0x015, 85, 121, 6, 255, 0x00, 0x00); delay(CAN_DELAY_AFTER_SEND);
-    CAN_RADIO.sendMsgBuf(0x1AF, 3, 131, 0, 192, 16, 44, 8, 0); delay(CAN_DELAY_AFTER_SEND);
+    CAN_RADIO.sendMsgBuf(0x000, 0, 0, 6, prof0, true); delay(CAN_DELAY_AFTER_SEND);
+    CAN_RADIO.sendMsgBuf(0x015, 0, 0, 6, prof1, true); delay(CAN_DELAY_AFTER_SEND);
+    CAN_RADIO.sendMsgBuf(0x1AF, 0, 0, 8, prof2, true); delay(CAN_DELAY_AFTER_SEND);    
+
     simulation_time = millis();
   }
 }
 
 unsigned char led_flash_counter = 0;
 void loop() {
-  manageMessagesFromJeep();
+  //manageMessagesFromJeep();
   manageMessagesFromRadio();
-
+  
+  // Enable benched radio to start
+  //simulateRunningJeep();
+  
   if (boston_ctrl_activated > 0 and millis() > boston_ctrl_activated + ACTIVE_PERIOD) {
     Serial.println("Controller cancelled by timeout");
     boston_ctrl_activated = 0;
@@ -262,6 +273,5 @@ void loop() {
       led_last_flash_event = millis();
     }
   }
-  // Enable benched radio to start
-  simulateRunningJeep();
+
 }
