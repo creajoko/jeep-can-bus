@@ -2,15 +2,15 @@
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <stdio.h>
-#include "mcp_can.h"
-#include "mcp2515_can.h"
+#include <mcp_can.h>
+#include <mcp2515_can.h>
 #include "jeep-can-bus-messages.h"
 
 #define MESSAGE_LEN 8
 #define CAN_DELAY_AFTER_SEND 10
 #define MAX_PROFILE_SEND_PERIOD 800
 unsigned long profile_sent = 0;
-#define SIMULATION_MESSAGES_PERIOD 800
+#define SIMULATION_MESSAGES_PERIOD 250
 
 // Manage LED
 #define LED_PERIOD 10000
@@ -96,7 +96,7 @@ void manageMessagesFromJeep() {
   memset(buf, 0, 8);
   CAN_JEEP.readMsgBuf(&len, buf);
   canId = CAN_JEEP.getCanId();
-
+  Serial.print("From jeep ");Serial.println(canId, HEX);
   // Apply rules
   if (canId == BOSTON_CTRL_MSG_ID and buf[0] != 0) {
     if (boston_ctrl_activated > 0) {
@@ -190,7 +190,7 @@ void manageMessagesFromRadio() {
   CAN_RADIO.readMsgBuf(&len, buf);
   canId = CAN_RADIO.getCanId();
   // Apply rules
-  Serial.print("From radio ");Serial.println(canId);
+  Serial.print("From radio ");Serial.println(canId, HEX);
   if (canId == SOUND_PROFILE_MSG_ID) {
      // Replace radios profile with my profile
      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
@@ -199,32 +199,27 @@ void manageMessagesFromRadio() {
   }
   // Send off any other message to jeep
   CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
-  
+  Serial.println("Sent to jeep");
 }
 
 unsigned long simulation_time = 0;
-unsigned char prof1[6] = {85, 121, 6, 255, 0x00, 0x00};
-unsigned char prof2[8] = {3, 131, 0, 192, 16, 44, 8, 0};
-unsigned char prof0[6] = {0x81, 0, 0, 0, 0, 0};
+unsigned char prof3[2] = {0x63, 0};
+bool simulation_on = true;
 
 void simulateRunningJeep() {
-  if (millis() > simulation_time + SIMULATION_MESSAGES_PERIOD) {
-    CAN_RADIO.sendMsgBuf(0x000, 0, 0, 6, prof0, true); delay(CAN_DELAY_AFTER_SEND);
-    CAN_RADIO.sendMsgBuf(0x015, 0, 0, 6, prof1, true); delay(CAN_DELAY_AFTER_SEND);
-    CAN_RADIO.sendMsgBuf(0x1AF, 0, 0, 8, prof2, true); delay(CAN_DELAY_AFTER_SEND);    
-
+  if (simulation_on and millis() > simulation_time + SIMULATION_MESSAGES_PERIOD) {
+    CAN_RADIO.sendMsgBuf(0x000, 0, 0, 2, prof3);
+    Serial.print("Simulator to radio "); Serial.println(0x00, HEX);       
     simulation_time = millis();
   }
 }
 
 unsigned char led_flash_counter = 0;
 void loop() {
-  //manageMessagesFromJeep();
+  simulateRunningJeep();  
   manageMessagesFromRadio();
-  
-  // Enable benched radio to start
-  //simulateRunningJeep();
-  
+  manageMessagesFromJeep();  
+
   if (boston_ctrl_activated > 0 and millis() > boston_ctrl_activated + ACTIVE_PERIOD) {
     Serial.println("Controller cancelled by timeout");
     boston_ctrl_activated = 0;
