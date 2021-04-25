@@ -9,8 +9,7 @@
 #define MESSAGE_LEN 8
 #define CAN_DELAY_AFTER_SEND 10
 #define MAX_PROFILE_SEND_PERIOD 800
-unsigned long profile_sent = 0;
-#define SIMULATION_MESSAGES_PERIOD 250
+#define SIMULATION_MESSAGES_PERIOD 500
 
 // Manage LED
 #define LED_PERIOD 10000
@@ -39,12 +38,14 @@ unsigned char led_state = 0;
 #define mid 3
 #define treble 4
 #define unknown 5
+#define SOUND_PROFILE_MSG_ID 0x3D0
 unsigned char profile[7] = {20, 10, 10, 10, 10, 10, 0xFF};
-unsigned char index = 0;
+
+unsigned char control_index = 0;
 unsigned long boston_ctrl_button_pressed = 0;
 unsigned long boston_ctrl_activated = 0;
 
-#define SOUND_PROFILE_MSG_ID 0x3D0
+
 
 const int SPI_CS_PIN_JEEP = 9;
 const int SPI_CS_PIN_RADIO = 10;
@@ -76,12 +77,14 @@ void setup() {
 
   Serial.println("CAN-bus proxy and Boston controller init ok");
 
-  // disable persistance for now!
-  if(false and EEPROM.read(0) != 255) {
+  Serial.println("Loading sound profile from memory");
+  if(EEPROM.read(0) != 255) {
     for(unsigned char i=0;i<7;i++) {
       profile[i] = EEPROM.read(i);
       Serial.print(profile[i]);
+      Serial.print(", ");
     }
+    Serial.println();
   }
 }
 
@@ -96,57 +99,54 @@ void manageMessagesFromJeep() {
   memset(buf, 0, 8);
   CAN_JEEP.readMsgBuf(&len, buf);
   canId = CAN_JEEP.getCanId();
-  Serial.print("From jeep ");Serial.println(canId, HEX);
+  //Serial.print("From jeep ");Serial.println(canId, HEX);
   // Apply rules
   if (canId == BOSTON_CTRL_MSG_ID and buf[0] != 0) {
     if (boston_ctrl_activated > 0) {
-      Serial.println("BOSTON_CONTROLLER_ACTIVE");
+      Serial.println("Controller active");
       // Boston controller is active
       Serial.print("Control index: ");
-      Serial.println(index);
+      Serial.println(control_index);
       if(buf[0] == INCREASE_MSG) {
           unsigned char max = 19;
-          if (index == 0) {
+          if (control_index == 0) {
             max = 25; // Limit below max 39!
           }
-          if (profile[index] < max) {
+          if (profile[control_index] < max) {
             Serial.println("Up");
-            profile[index] += 1;
-            unsigned char temp_buf[3] = {0x55,0x70,0};
+            profile[control_index] += 1;
           }
           boston_ctrl_activated = millis();
       } else if(buf[0] == DECREASE_MSG) {
-          if (profile[index] > 0) {
+          if (profile[control_index] > 0) {
             Serial.println("Down");
-            profile[index] -= 1;
-            unsigned char temp_buf[5] = {0x44,0x6f,0x77,0x6e,0};
+            profile[control_index] -= 1;
           }
           boston_ctrl_activated = millis();
       } else if(buf[0] == COMMAND_MSG) {
-          if (index < 5) {
-            Serial.print("Change index to ");
-            index += 1;
+          Serial.print("Change index to ");
+          if (control_index < 5) {
+            control_index += 1;
           } else {
-            index = 0;
+            control_index = 0;
           }
-          Serial.println(index);
+          Serial.println(control_index);
           boston_ctrl_activated = millis();
       }
       // Store new profile
-      Serial.print("Store new profile: ");
+      Serial.print("Store new sound profile: ");
       for (unsigned int i=0; i<7; i++) {
-        // EEPROM.write(i, profile[i]);
+        EEPROM.write(i, profile[i]);
         Serial.print(profile[i]);
         Serial.print(", ");
       }
-      Serial.println("Send profile to jeep");
-      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-      profile_sent = millis();
+      CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile);
+      Serial.println("Profile sent to jeep");
       return;
     } else {
       // Boston controller is off, check if we shall activate
       if (buf[0] == COMMAND_MSG) {
-        Serial.println("Activation command received");
+        Serial.println("Controller activation command received");
         if (boston_ctrl_button_pressed > 0) {
           // We are in trigger activation mode
           if (millis() < boston_ctrl_button_pressed + ACTIVATION_PERIOD) {
@@ -154,7 +154,7 @@ void manageMessagesFromJeep() {
             Serial.println("Activating controller");
             boston_ctrl_activated = millis();
             boston_ctrl_button_pressed = 0;
-            index = 0;
+            control_index = 0;
             return;
           } else {
             // New press but too late to activate, Flush bufferand, clear timer
@@ -163,7 +163,7 @@ void manageMessagesFromJeep() {
             boston_ctrl_activated = 0;
             unsigned char buffered_msg_array[2] = {buffered_msg, 0};
             buffered_msg = 0;
-            CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array , true);
+            CAN_RADIO.sendMsgBuf(canId, 0, 0, 2, buffered_msg_array);
             delay(CAN_DELAY_AFTER_SEND);
           }
         } else {
@@ -177,8 +177,7 @@ void manageMessagesFromJeep() {
     }
   }
   // Send off to radio
-  CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf, true);
-  Serial.println(canId);
+  CAN_RADIO.sendMsgBuf(canId, 0, 0, len, buf);
 }
 void manageMessagesFromRadio() {
   unsigned int canId;
@@ -193,13 +192,11 @@ void manageMessagesFromRadio() {
   Serial.print("From radio ");Serial.println(canId, HEX);
   if (canId == SOUND_PROFILE_MSG_ID) {
      // Replace radios profile with my profile
-     CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile, true);
-     profile_sent = millis();
+     CAN_JEEP.sendMsgBuf(SOUND_PROFILE_MSG_ID, 0, 0, 7, profile);
      return;
   }
-  // Send off any other message to jeep
-  CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf, true);
-  Serial.println("Sent to jeep");
+  // Send off any all other messages to jeep
+  CAN_JEEP.sendMsgBuf(canId, 0, 0, len, buf);
 }
 
 unsigned long simulation_time = 0;
@@ -235,7 +232,7 @@ void loop() {
       led_flash_counter = 0;
       led_state = 0;
     }
-    if(led_flash_counter <= index){
+    if(led_flash_counter <= control_index){
       if(led_state == 0 and millis() > led_last_event + LED_OFF_TIME) {
         led_last_event = millis();
         led_state = 1;
